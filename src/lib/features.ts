@@ -157,4 +157,12 @@ export const FEATURES: FeatureConfig[] = [
     premium: false,
     accent: 'bg-emerald-100 text-emerald-600',
   },
+  {
+    id: 'focus-timer',
+    title: 'Focus Timer',
+    description: 'Distraction-free study mode with timed sessions.',
+    icon: Timer,
+    premium: false,
+    accent: 'bg-amber-100 text-amber-600',
+  },
 ];

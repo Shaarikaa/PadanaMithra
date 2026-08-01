@@ -1,7 +1,8 @@
 // Question Solver — parses text-based questions and provides step-by-step solutions.
 // Supports common physics, math, and chemistry problems found in Class 9-10 curriculum.
-// This is a pattern-matching solver, not an AI — it extracts given values, identifies
-// the formula, substitutes, and produces a step-by-step solution.
+// Also supports conceptual questions by matching against the knowledge base.
+
+import { KNOWLEDGE_BASE, CHAPTERS } from './mockData';
 
 export interface SolutionStep {
   label: string;
@@ -18,6 +19,261 @@ export interface SolveResult {
   steps: SolutionStep[];
   answer: string;
   explanation: string;
+  isConceptual?: boolean;
+}
+
+// ---- Conceptual question answering ----
+
+function solveConceptual(text: string): SolveResult | null {
+  const lower = text.toLowerCase().trim();
+
+  // Remove common question prefixes for matching
+  const cleaned = lower
+    .replace(/^(why|what|how|when|where|who|explain|describe|define|state|list|name|give)\s+/i, '')
+    .replace(/\?+$/g, '')
+    .trim();
+
+  // Try to match against knowledge base by chapter name
+  for (const [chapter, content] of Object.entries(KNOWLEDGE_BASE)) {
+    const chapterLower = chapter.toLowerCase();
+    if (cleaned.includes(chapterLower) || lower.includes(chapterLower)) {
+      const subject = Object.entries(CHAPTERS).find(([, chapters]) => chapters.includes(chapter))?.[0] || 'General';
+      return {
+        solved: true,
+        subject,
+        chapter,
+        topic: chapter,
+        given: {},
+        formula: '',
+        steps: [
+          { label: 'Answer', content: content },
+        ],
+        answer: content.split('.')[0] + '.',
+        explanation: content,
+        isConceptual: true,
+      };
+    }
+  }
+
+  // Try keyword-based matching for common conceptual topics
+  const CONCEPTUAL_MATCHES: { keywords: string[]; chapter: string; subject: string; answer: string; explanation: string }[] = [
+    {
+      keywords: ['ice float', 'ice floats', 'why does ice float', 'density of ice'],
+      chapter: 'Matter',
+      subject: 'Physics',
+      answer: 'Ice floats because it is less dense than liquid water.',
+      explanation: 'Ice floats because solid water has a lower density than liquid water. When water freezes, the hydrogen bonds form a hexagonal crystal structure that keeps water molecules farther apart. This makes ice about 9% less dense than liquid water, so it floats. This is why lakes freeze from the top down, allowing aquatic life to survive underneath.',
+    },
+    {
+      keywords: ['photosynthesis'],
+      chapter: 'Life Processes',
+      subject: 'Biology',
+      answer: 'Photosynthesis is the process by which plants make food using sunlight, CO₂, and water.',
+      explanation: 'Photosynthesis is the process by which green plants use sunlight, carbon dioxide, and water to produce glucose (food) and oxygen. It takes place in the chloroplasts, which contain chlorophyll. The balanced equation is: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ (using sunlight energy). Chlorophyll captures light energy, which converts carbon dioxide and water into glucose and oxygen.',
+    },
+    {
+      keywords: ['newton\'s first law', 'first law of motion', 'law of inertia', 'inertia'],
+      chapter: 'Laws of Motion',
+      subject: 'Physics',
+      answer: "Newton's First Law states that an object stays at rest or in uniform motion unless acted on by an external force.",
+      explanation: "Newton's First Law of Motion (the Law of Inertia) states that an object will remain at rest or continue moving at a constant velocity in a straight line unless acted upon by an unbalanced external force. This means things don't start moving, stop, or change direction on their own — a force is always needed to change their state of motion. For example, a book on a table stays at rest because no net force acts on it.",
+    },
+    {
+      keywords: ['newton\'s second law', 'second law of motion'],
+      chapter: 'Laws of Motion',
+      subject: 'Physics',
+      answer: "Newton's Second Law states that Force = mass × acceleration (F = ma).",
+      explanation: "Newton's Second Law of Motion states that the acceleration of an object is directly proportional to the net force acting on it and inversely proportional to its mass. The formula is F = ma, where F is force (in newtons), m is mass (in kg), and a is acceleration (in m/s²). This means a heavier object needs more force to accelerate at the same rate as a lighter one.",
+    },
+    {
+      keywords: ['newton\'s third law', 'third law of motion', 'action reaction'],
+      chapter: 'Laws of Motion',
+      subject: 'Physics',
+      answer: "Newton's Third Law states that every action has an equal and opposite reaction.",
+      explanation: "Newton's Third Law of Motion states that for every action, there is an equal and opposite reaction. This means forces always come in pairs — when you push on a wall, the wall pushes back on you with the same force. For example, when a rocket expels gas downward, the gas pushes the rocket upward with an equal force.",
+    },
+    {
+      keywords: ['why does sound', 'sound travel', 'sound need a medium', 'sound vacuum'],
+      chapter: 'Sound',
+      subject: 'Physics',
+      answer: 'Sound needs a medium to travel because it is a mechanical wave.',
+      explanation: 'Sound is a mechanical longitudinal wave — it travels by vibrating particles of a medium (solid, liquid, or gas). In a vacuum, there are no particles to vibrate, so sound cannot travel through it. This is why sound cannot travel in space. Light, however, is an electromagnetic wave and does not need a medium, so it can travel through a vacuum.',
+    },
+    {
+      keywords: ['why is the sky blue', 'sky blue', 'scattering of light'],
+      chapter: 'Light',
+      subject: 'Physics',
+      answer: 'The sky appears blue because of scattering of sunlight by air molecules.',
+      explanation: 'The sky appears blue due to Rayleigh scattering. Sunlight contains all colors, but blue light has a shorter wavelength and is scattered more by air molecules in the atmosphere than longer wavelengths like red. This scattered blue light reaches our eyes from all directions, making the sky look blue.',
+    },
+    {
+      keywords: ['water boils', 'boiling point of water', 'evaporation'],
+      chapter: 'Matter',
+      subject: 'Physics',
+      answer: 'Water boils at 100°C at sea level pressure.',
+      explanation: 'Boiling is the process where a liquid turns into a gas throughout the liquid, not just at the surface. Water boils at 100°C (212°F) at standard atmospheric pressure (1 atm). At higher altitudes, where air pressure is lower, water boils at a lower temperature. Evaporation, in contrast, happens only at the surface and at any temperature.',
+    },
+    {
+      keywords: ['why do we sweat', 'sweating', 'sweat cool'],
+      chapter: 'Life Processes',
+      subject: 'Biology',
+      answer: 'Sweating cools the body through evaporation.',
+      explanation: 'Sweating is the body\'s way of cooling itself. When sweat (mostly water) evaporates from the skin surface, it absorbs heat from the body. This is called evaporative cooling. The heat energy breaks the bonds between water molecules, turning liquid sweat into vapor, which removes heat from the skin and lowers body temperature.',
+    },
+    {
+      keywords: ['why do leaves', 'leaves green', 'chlorophyll'],
+      chapter: 'Life Processes',
+      subject: 'Biology',
+      answer: 'Leaves are green because of chlorophyll, which absorbs red and blue light but reflects green light.',
+      explanation: 'Leaves appear green because they contain chlorophyll, a green pigment in chloroplasts. Chlorophyll absorbs red and blue wavelengths of light for photosynthesis but reflects green light, which is why we see leaves as green. In autumn, chlorophyll breaks down, revealing other pigments like yellow and orange carotenoids.',
+    },
+    {
+      keywords: ['why is dna', 'dna important', 'dna function', 'dna do'],
+      chapter: 'Heredity & Evolution',
+      subject: 'Biology',
+      answer: 'DNA carries the genetic instructions for life.',
+      explanation: 'DNA (Deoxyribonucleic Acid) is a molecule that carries the genetic instructions for the development, functioning, and reproduction of all known living organisms. It is passed from parents to offspring and determines inherited traits. DNA is structured as a double helix, with bases (A, T, G, C) that pair in a specific way to encode genetic information.',
+    },
+    {
+      keywords: ['why do we need oxygen', 'oxygen important', 'respiration', 'cellular respiration'],
+      chapter: 'Life Processes',
+      subject: 'Biology',
+      answer: 'Oxygen is needed for cellular respiration, which produces energy.',
+      explanation: 'Oxygen is essential for cellular respiration — the process by which cells break down glucose to produce ATP (energy). The simplified equation is: Glucose + Oxygen → Carbon Dioxide + Water + Energy (ATP). Without oxygen, our cells cannot produce enough energy to sustain life processes like muscle contraction, nerve signaling, and growth.',
+    },
+    {
+      keywords: ['acid rain', 'what is acid rain'],
+      chapter: 'Acids & Bases',
+      subject: 'Chemistry',
+      answer: 'Acid rain is rain made acidic by pollutants like sulfur dioxide and nitrogen oxides.',
+      explanation: 'Acid rain is caused when sulfur dioxide (SO₂) and nitrogen oxides (NOₓ) from burning fossil fuels react with water vapor in the atmosphere to form sulfuric acid and nitric acid. These acids mix with rain and fall as acid rain, which can harm plants, aquatic life, and buildings. The pH of acid rain is typically below 5.6.',
+    },
+  ];
+
+  for (const match of CONCEPTUAL_MATCHES) {
+    if (match.keywords.some((kw) => cleaned.includes(kw) || lower.includes(kw))) {
+      return {
+        solved: true,
+        subject: match.subject,
+        chapter: match.chapter,
+        topic: match.chapter,
+        given: {},
+        formula: '',
+        steps: [
+          { label: 'Answer', content: match.answer },
+          { label: 'Explanation', content: match.explanation },
+          { label: 'Key Point', content: match.answer },
+        ],
+        answer: match.answer,
+        explanation: match.explanation,
+        isConceptual: true,
+      };
+    }
+  }
+
+  // Try keyword fallbacks from the knowledge base
+  if (lower.includes('newton') || lower.includes('force')) {
+    return buildConceptualResult('Laws of Motion', 'Physics', KNOWLEDGE_BASE['Laws of Motion']);
+  }
+  if (lower.includes('energy') || lower.includes('work')) {
+    return buildConceptualResult('Work & Energy', 'Physics', KNOWLEDGE_BASE['Work & Energy']);
+  }
+  if (lower.includes('atom') || lower.includes('molecule')) {
+    return buildConceptualResult('Atoms & Molecules', 'Chemistry', KNOWLEDGE_BASE['Atoms & Molecules']);
+  }
+  if (lower.includes('photosynth') || lower.includes('life process')) {
+    return buildConceptualResult('Life Processes', 'Biology', KNOWLEDGE_BASE['Life Processes']);
+  }
+  if (lower.includes('periodic') || lower.includes('element')) {
+    return buildConceptualResult('Periodic Table', 'Chemistry', KNOWLEDGE_BASE['Periodic Table']);
+  }
+  if (lower.includes('cell') || lower.includes('organelle')) {
+    return buildConceptualResult('Cell', 'Biology', KNOWLEDGE_BASE['Cell']);
+  }
+  if (lower.includes('tissue')) {
+    return buildConceptualResult('Tissues', 'Biology', KNOWLEDGE_BASE['Tissues']);
+  }
+  if (lower.includes('reproduction') || lower.includes('reproduce')) {
+    return buildConceptualResult('Reproduction', 'Biology', KNOWLEDGE_BASE['Reproduction']);
+  }
+  if (lower.includes('heredity') || lower.includes('evolution') || lower.includes('gene')) {
+    return buildConceptualResult('Heredity & Evolution', 'Biology', KNOWLEDGE_BASE['Heredity & Evolution']);
+  }
+  if (lower.includes('electric') || lower.includes('circuit') || lower.includes('ohm')) {
+    return buildConceptualResult('Electricity', 'Physics', KNOWLEDGE_BASE['Electricity']);
+  }
+  if (lower.includes('light') || lower.includes('reflection') || lower.includes('refraction') || lower.includes('lens')) {
+    return buildConceptualResult('Light', 'Physics', KNOWLEDGE_BASE['Light']);
+  }
+  if (lower.includes('sound') || lower.includes('wave') || lower.includes('frequency')) {
+    return buildConceptualResult('Sound', 'Physics', KNOWLEDGE_BASE['Sound']);
+  }
+  if (lower.includes('matter') || lower.includes('state of') || lower.includes('solid') || lower.includes('liquid') || lower.includes('gas')) {
+    return buildConceptualResult('Matter', 'Physics', KNOWLEDGE_BASE['Matter']);
+  }
+  if (lower.includes('chemical reaction') || lower.includes('chemical equation')) {
+    return buildConceptualResult('Chemical Reactions', 'Chemistry', KNOWLEDGE_BASE['Chemical Reactions']);
+  }
+  if (lower.includes('acid') || lower.includes('base') || lower.includes('ph scale') || lower.includes('indicator')) {
+    return buildConceptualResult('Acids & Bases', 'Chemistry', KNOWLEDGE_BASE['Acids & Bases']);
+  }
+  if (lower.includes('polynomial')) {
+    return buildConceptualResult('Polynomials', 'Mathematics', KNOWLEDGE_BASE['Polynomials']);
+  }
+  if (lower.includes('linear equation')) {
+    return buildConceptualResult('Linear Equations', 'Mathematics', KNOWLEDGE_BASE['Linear Equations']);
+  }
+  if (lower.includes('triangle') || lower.includes('pythagoras') || lower.includes('similar triangle')) {
+    return buildConceptualResult('Triangles', 'Mathematics', KNOWLEDGE_BASE['Triangles']);
+  }
+  if (lower.includes('trigonometry') || lower.includes('sin') || lower.includes('cos') || lower.includes('tan')) {
+    return buildConceptualResult('Trigonometry', 'Mathematics', KNOWLEDGE_BASE['Trigonometry']);
+  }
+  if (lower.includes('statistics') || lower.includes('mean') || lower.includes('median') || lower.includes('mode')) {
+    return buildConceptualResult('Statistics', 'Mathematics', KNOWLEDGE_BASE['Statistics']);
+  }
+  if (lower.includes('real number') || lower.includes('irrational') || lower.includes('hcf') || lower.includes('lcm')) {
+    return buildConceptualResult('Real Numbers', 'Mathematics', KNOWLEDGE_BASE['Real Numbers']);
+  }
+
+  return null;
+}
+
+function buildConceptualResult(chapter: string, subject: string, content: string): SolveResult {
+  return {
+    solved: true,
+    subject,
+    chapter,
+    topic: chapter,
+    given: {},
+    formula: '',
+    steps: [
+      { label: 'Answer', content: content.split('.')[0] + '.' },
+      { label: 'Explanation', content: content },
+      { label: 'Key Point', content: content.split('.')[0] + '.' },
+    ],
+    answer: content.split('.')[0] + '.',
+    explanation: content,
+    isConceptual: true,
+  };
+}
+
+// ---- Multi-question detection ----
+
+export function splitMultipleQuestions(text: string): string[] {
+  // Split by numbered questions: "1.", "2.", "Q1", "Q2", etc.
+  const numbered = text.match(/(?:^|\n)\s*(?:Q?\d+\.?\s*|\(?[a-z]\)[\s.])[\s\S]*?(?=\n\s*(?:Q?\d+\.?\s*|\(?[a-z]\)[\s.])|$)/gi);
+  if (numbered && numbered.length > 1) {
+    return numbered.map((q) => q.trim()).filter((q) => q.length > 5);
+  }
+
+  // Split by question marks if there are multiple
+  const byQuestionMark = text.split(/\?\s+/).filter((s) => s.trim().length > 5);
+  if (byQuestionMark.length > 1) {
+    return byQuestionMark.map((q, i) => (i < byQuestionMark.length - 1 ? q + '?' : q).trim());
+  }
+
+  return [text.trim()];
 }
 
 // ---- Number extraction helpers ----
@@ -523,12 +779,18 @@ export function solveQuestion(question: string): SolveResult {
     };
   }
 
-  // Try each solver in order
+  // Try numerical solvers first (they are more specific)
   for (const solver of SOLVERS) {
     const result = solver(trimmed);
     if (result && result.solved) {
       return result;
     }
+  }
+
+  // Try conceptual solver
+  const conceptual = solveConceptual(trimmed);
+  if (conceptual && conceptual.solved) {
+    return conceptual;
   }
 
   // If no solver matched, return a helpful fallback
@@ -538,7 +800,7 @@ export function solveQuestion(question: string): SolveResult {
     formula: '',
     steps: [],
     answer: '',
-    explanation: "I can solve problems involving: velocity, speed, acceleration, force (F=ma), weight, Ohm's law, Pythagorean theorem, kinetic/potential energy, density, pH classification, and pressure. Please type the full question with the given values (e.g., 'Calculate the velocity of a car that travels 100 m in 20 seconds').",
+    explanation: "I can solve numerical problems (velocity, speed, acceleration, force, weight, Ohm's law, Pythagoras, energy, density, pH, pressure) and answer conceptual questions about Physics, Chemistry, Biology, and Mathematics topics from your syllabus. Please make sure your question is clear and includes all given values for numerical problems.",
   };
 }
 

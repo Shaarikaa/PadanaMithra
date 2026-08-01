@@ -90,7 +90,8 @@ export type FeatureId =
   | 'pro-notes'
   | 'learning-path'
   | 'teach-back'
-  | 'learning-curve';
+  | 'learning-curve'
+  | 'focus-timer';
 
 // ---- Learning Intelligence Types ----
 
