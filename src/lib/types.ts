@@ -171,3 +171,41 @@ export interface TeachBackSession {
   evaluation: TeachBackEvaluation;
   timestamp: number;
 }
+
+// ---- Parent Dashboard Types ----
+
+export interface ParentProfile {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface ParentStudentConnection {
+  id: string;
+  parentId: string;
+  studentId: string;
+  studentName: string;
+  status: 'active' | 'disconnected';
+  createdAt: string;
+}
+
+export interface MonthlyReport {
+  id: string;
+  studentUserId: string;
+  studentName: string;
+  parentId: string;
+  month: number;
+  year: number;
+  studyTimeMinutes: number;
+  subjectsStudied: number;
+  topicsStudied: number;
+  questionsPracticed: number;
+  practiceSessions: number;
+  revisionSessions: number;
+  subjectActivity: Record<string, number>;
+  summary: string;
+  reportStatus: 'pending' | 'sent' | 'failed';
+  emailSentAt: string | null;
+  createdAt: string;
+}

@@ -10,7 +10,9 @@ type Page =
   | { name: 'onboarding' }
   | { name: 'dashboard' }
   | { name: 'profile' }
-  | { name: 'feature'; id: string };
+  | { name: 'feature'; id: string }
+  | { name: 'parent-login' }
+  | { name: 'parent-dashboard' };
 
 interface AppContextValue {
   user: User | null;

@@ -1,17 +1,18 @@
 import { useState } from 'react';
-import { GraduationCap, ArrowRight, ArrowLeft, Check, Zap, FlaskConical, Dna, Sigma, Sparkles } from 'lucide-react';
+import { GraduationCap, ArrowRight, ArrowLeft, Check, Zap, FlaskConical, Dna, Sigma, Sparkles, Users, Mail, PartyPopper, Link2, Loader as Loader2 } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { CLASSES, SUBJECT_INFOS, getChaptersForSubject, getTopicsForChapter } from '@/lib/curriculum';
+import { connectParent } from '@/lib/parentService';
 
 const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap, FlaskConical, Dna, Sigma,
 };
 
-const STEPS = ['Name', 'Birthday', 'Class', 'Subjects', 'Chapters'] as const;
+const STEPS = ['Name', 'Birthday', 'Class', 'Subjects', 'Chapters', 'Parent'] as const;
 
 interface OnboardingData {
   fullName: string;
@@ -38,6 +39,12 @@ export function OnboardingPage() {
   const [stepIdx, setStepIdx] = useState(0);
   const [data, setData] = useState<OnboardingData>(INITIAL_DATA);
   const [error, setError] = useState('');
+  const [parentChoice, setParentChoice] = useState<'yes' | 'no' | null>(null);
+  const [parentName, setParentName] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentError, setParentError] = useState('');
+  const [connecting, setConnecting] = useState(false);
+  const [parentConnected, setParentConnected] = useState(false);
 
   const currentStep = STEPS[stepIdx];
 
@@ -89,23 +96,48 @@ export function OnboardingPage() {
     return true;
   };
 
+  const finishOnboarding = () => {
+    const classInfo = CLASSES.find((c) => c.id === data.classId);
+    completeOnboarding({
+      fullName: data.fullName.trim(),
+      dateOfBirth: data.dateOfBirth,
+      board: classInfo?.board ?? 'Kerala SCERT',
+      classLevel: classInfo?.label ?? 'Class 9',
+      selectedSubjects: data.selectedSubjects,
+      currentSubject: data.currentSubject,
+      currentChapter: data.currentChapter,
+      currentTopic: data.currentTopic,
+    });
+  };
+
   const handleNext = () => {
     if (!validateCurrent()) return;
     if (stepIdx < STEPS.length - 1) {
       setStepIdx((i) => i + 1);
     } else {
-      const classInfo = CLASSES.find((c) => c.id === data.classId);
-      completeOnboarding({
-        fullName: data.fullName.trim(),
-        dateOfBirth: data.dateOfBirth,
-        board: classInfo?.board ?? 'Kerala SCERT',
-        classLevel: classInfo?.label ?? 'Class 9',
-        selectedSubjects: data.selectedSubjects,
-        currentSubject: data.currentSubject,
-        currentChapter: data.currentChapter,
-        currentTopic: data.currentTopic,
-      });
+      finishOnboarding();
     }
+  };
+
+  const handleParentConnect = async () => {
+    setParentError('');
+    if (!parentName.trim()) { setParentError('Please enter your parent\'s name.'); return; }
+    if (!parentEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail.trim())) {
+      setParentError('Please enter a valid email address for your parent.');
+      return;
+    }
+    setConnecting(true);
+    const result = await connectParent(parentName, parentEmail, data.fullName.trim());
+    setConnecting(false);
+    if (!result.success) {
+      setParentError(result.error || 'Failed to connect parent. Please try again.');
+      return;
+    }
+    setParentConnected(true);
+  };
+
+  const handleParentDone = () => {
+    finishOnboarding();
   };
 
   const handleBack = () => {
@@ -189,9 +221,25 @@ export function OnboardingPage() {
                 onBack={handleBack}
               />
             )}
+            {currentStep === 'Parent' && (
+              <ParentStep
+                choice={parentChoice}
+                setChoice={setParentChoice}
+                parentName={parentName}
+                setParentName={setParentName}
+                parentEmail={parentEmail}
+                setParentEmail={setParentEmail}
+                error={parentError}
+                connecting={connecting}
+                connected={parentConnected}
+                onConnect={handleParentConnect}
+                onDone={handleParentDone}
+                studentName={data.fullName.trim()}
+              />
+            )}
 
-            {/* Navigation buttons (hidden on chapters step — it has its own) */}
-            {currentStep !== 'Chapters' && (
+            {/* Navigation buttons (hidden on chapters and parent steps — they have their own) */}
+            {currentStep !== 'Chapters' && currentStep !== 'Parent' && (
               <div className="mt-8 flex items-center justify-between gap-3">
                 {stepIdx > 0 ? (
                   <Button variant="ghost" onClick={handleBack} className="text-slate-500">
@@ -564,6 +612,138 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs font-medium text-slate-400">{label}</p>
       <p className="text-sm font-semibold text-slate-800">{value || '—'}</p>
+    </div>
+  );
+}
+
+function ParentStep({
+  choice,
+  setChoice,
+  parentName,
+  setParentName,
+  parentEmail,
+  setParentEmail,
+  error,
+  connecting,
+  connected,
+  onConnect,
+  onDone,
+  studentName,
+}: {
+  choice: 'yes' | 'no' | null;
+  setChoice: (c: 'yes' | 'no' | null) => void;
+  parentName: string;
+  setParentName: (v: string) => void;
+  parentEmail: string;
+  setParentEmail: (v: string) => void;
+  error: string;
+  connecting: boolean;
+  connected: boolean;
+  onConnect: () => void;
+  onDone: () => void;
+  studentName: string;
+}) {
+  return (
+    <div className="animate-fade-in-up">
+      <StepHeading
+        emoji="👨‍👩‍👧"
+        title="Would you like to connect a Parent Dashboard?"
+        subtitle="Your parent can receive a monthly report about your learning progress and support your learning journey."
+      />
+
+      {choice === null && (
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Button
+            onClick={() => setChoice('yes')}
+            className="h-12 flex-1 bg-indigo-600 text-base hover:bg-indigo-700"
+          >
+            <Users className="mr-2 h-5 w-5" />
+            Yes, Connect Parent
+          </Button>
+          <Button
+            onClick={onDone}
+            variant="outline"
+            className="h-12 flex-1 border-slate-300 text-base hover:bg-slate-50"
+          >
+            No, Continue
+          </Button>
+        </div>
+      )}
+
+      {choice === 'yes' && !connected && (
+        <div className="mt-6 space-y-5">
+          <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-violet-50/40 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-indigo-600" />
+              <h3 className="text-sm font-semibold text-slate-900">Connect Your Parent</h3>
+            </div>
+            <p className="mb-4 text-sm text-slate-600">
+              Enter your parent's details so we can send them your monthly learning progress report.
+            </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="parent-name">Parent Name</Label>
+                <Input
+                  id="parent-name"
+                  value={parentName}
+                  onChange={(e) => setParentName(e.target.value)}
+                  placeholder="Parent's full name"
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="parent-email">Parent Email</Label>
+                <Input
+                  id="parent-email"
+                  type="email"
+                  value={parentEmail}
+                  onChange={(e) => setParentEmail(e.target.value)}
+                  placeholder="parent@example.com"
+                  className="h-11"
+                />
+              </div>
+              {error && <p className="text-sm text-rose-600">{error}</p>}
+              <Button
+                onClick={onConnect}
+                disabled={connecting}
+                className="h-11 w-full bg-indigo-600 hover:bg-indigo-700"
+              >
+                {connecting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Users className="mr-2 h-4 w-4" />
+                    Connect Parent
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          <button
+            onClick={onDone}
+            className="text-sm text-slate-400 transition hover:text-slate-600"
+          >
+            Skip for now
+          </button>
+        </div>
+      )}
+
+      {choice === 'yes' && connected && (
+        <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 text-center">
+          <PartyPopper className="mx-auto h-10 w-10 text-emerald-600" />
+          <h3 className="mt-3 text-lg font-bold text-slate-900">Parent Connected!</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Your parent has been connected. They'll receive a monthly learning progress report.
+          </p>
+          <Button onClick={onDone} className="mt-5 bg-indigo-600 hover:bg-indigo-700">
+            Go to My Dashboard
+            <ArrowRight className="ml-1.5 h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

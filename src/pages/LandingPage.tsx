@@ -27,6 +27,9 @@ export function LandingPage() {
             <span className="text-xl font-semibold tracking-tight text-slate-900">Padanamithra</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" onClick={() => navigate({ name: 'parent-login' })} className="font-medium text-slate-600 hover:text-indigo-600">
+              Parent Login
+            </Button>
             <Button variant="ghost" onClick={() => navigate({ name: 'login' })} className="font-medium text-slate-700 hover:text-indigo-600">
               Login
             </Button>

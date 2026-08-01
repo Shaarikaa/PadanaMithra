@@ -22,6 +22,8 @@ import { ProNotesPage } from '@/pages/ProNotesPage';
 import { LearningPathPage } from '@/pages/LearningPathPage';
 import { TeachBackPage } from '@/pages/TeachBackPage';
 import { LearningCurvePage } from '@/pages/LearningCurvePage';
+import { ParentLoginPage } from '@/pages/ParentLoginPage';
+import { ParentDashboardPage } from '@/pages/ParentDashboardPage';
 import { FEATURES } from '@/lib/features';
 
 const FEATURE_PAGES: Record<string, () => React.ReactElement | null> = {
@@ -60,6 +62,8 @@ function Router() {
   if (page.name === 'onboarding') return <OnboardingPage />;
   if (page.name === 'profile') return <ProfilePage />;
   if (page.name === 'dashboard') return <DashboardPage />;
+  if (page.name === 'parent-login') return <ParentLoginPage />;
+  if (page.name === 'parent-dashboard') return <ParentDashboardPage />;
   if (page.name === 'feature') {
     const feature = FEATURES.find((f) => f.id === page.id);
     if (feature) {

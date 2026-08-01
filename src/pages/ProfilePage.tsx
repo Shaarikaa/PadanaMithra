@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User as UserIcon, Cake, GraduationCap, BookOpen, Zap, FlaskConical, Dna, Sigma, CreditCard as Edit2, Check, ArrowRight, Target } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User as UserIcon, Cake, GraduationCap, BookOpen, Zap, FlaskConical, Dna, Sigma, CreditCard as Edit2, Check, ArrowRight, Target, Users, Mail, Unlink, Loader as Loader2 } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { SUBJECT_INFOS, getChaptersForSubject, getTopicsForChapter } from '@/lib/curriculum';
+import { getParentConnection, disconnectParent } from '@/lib/parentService';
 
 const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap, FlaskConical, Dna, Sigma,
@@ -48,6 +49,23 @@ export function ProfilePage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editSubjectsOpen, setEditSubjectsOpen] = useState(false);
   const [editChapterOpen, setEditChapterOpen] = useState(false);
+  const [parentConnection, setParentConnection] = useState(getParentConnection());
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  useEffect(() => {
+    setParentConnection(getParentConnection());
+  }, []);
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    const result = await disconnectParent();
+    setDisconnecting(false);
+    if (result.success) {
+      setParentConnection(null);
+      setDisconnectOpen(false);
+    }
+  };
 
   if (!profile) return null;
 
@@ -143,6 +161,43 @@ export function ProfilePage() {
           </div>
         </Card>
 
+        {/* Parent Dashboard */}
+        <Card className="border-slate-200 p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">Parent Dashboard</h3>
+          </div>
+          {parentConnection ? (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 rounded-xl bg-emerald-50/50 p-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                  <Users className="h-4 w-4" />
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-emerald-700">Parent Connected</p>
+                  <p className="mt-1 text-sm text-slate-700">Parent: {parentConnection.name}</p>
+                  <p className="text-sm text-slate-500">Email: {parentConnection.email}</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => setDisconnectOpen(true)} className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700">
+                <Unlink className="mr-1.5 h-4 w-4" />
+                Disconnect Parent
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                  <Users className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-slate-600">No parent connected</p>
+                  <p className="mt-1 text-xs text-slate-400">Your parent can receive monthly learning progress reports. Connect them during onboarding or from the Parent Dashboard.</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+
         {/* Quick edit buttons */}
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => setEditOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
@@ -164,6 +219,28 @@ export function ProfilePage() {
 
       {/* Edit chapter dialog */}
       <EditChapterDialog open={editChapterOpen} onClose={() => setEditChapterOpen(false)} profile={profile} onSave={updateProfile} />
+
+      {/* Disconnect parent confirmation */}
+      <Dialog open={disconnectOpen} onOpenChange={(o) => !o && setDisconnectOpen(false)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect Parent?</DialogTitle>
+            <DialogDescription>
+              Your parent will no longer receive monthly learning progress reports. You can reconnect them anytime.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisconnectOpen(false)}>Cancel</Button>
+            <Button onClick={handleDisconnect} disabled={disconnecting} className="bg-rose-600 hover:bg-rose-700">
+              {disconnecting ? (
+                <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Disconnecting...</>
+              ) : (
+                <><Unlink className="mr-1.5 h-4 w-4" /> Yes, Disconnect</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
