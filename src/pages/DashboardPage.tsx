@@ -375,6 +375,30 @@ export function DashboardPage() {
         </Card>
       </div>
 
+      {/* Learning Curve due notification */}
+      {lcSummary && lcSummary.dueToday > 0 && (
+        <div className="mb-6 flex items-center gap-4 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 p-4 animate-fade-in-up">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
+            <Brain className="h-5 w-5" />
+          </span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-indigo-900">Learning Curve Reminder</p>
+            <p className="text-xs text-indigo-700">
+              You have {lcSummary.dueToday} topic{lcSummary.dueToday === 1 ? '' : 's'} ready for revision.
+              {lcSummary.dueItems.length > 0 && ` Next: ${lcSummary.dueItems[0].subject} — ${lcSummary.dueItems[0].topic}`}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => navigate({ name: 'feature', id: 'learning-curve' })}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            Review Now
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       {/* Learning Curve + Mentor quick cards */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         {/* Learning Curve */}

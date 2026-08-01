@@ -361,7 +361,7 @@ export function evaluateRecallResponse(topic: string, response: string): {
   };
 }
 
-function getQuickReview(topic: string): string {
+export function getQuickReview(topic: string): string {
   const reviews: Record<string, string> = {
     velocity: 'Velocity = displacement ÷ time. It is a vector — it has both magnitude (speed) and direction. Speed is scalar (magnitude only).',
     speed: 'Speed = distance ÷ time. It is a scalar quantity — it only has magnitude, no direction.',
@@ -392,6 +392,30 @@ export interface DifficultySignal {
   subject: string;
   signal: string;
   shouldSuggest: boolean;
+}
+
+// Auto-add topics to Learning Curve based on difficulty signals.
+// Called after mock tests, AI tutor sessions, and practice activities.
+// Only adds topics with strong difficulty signals (not every wrong answer).
+
+export async function autoAddFromDifficultySignals(): Promise<number> {
+  const signals = checkDifficultySignals();
+  let added = 0;
+
+  for (const signal of signals) {
+    if (signal.shouldSuggest && signal.topic) {
+      const result = await addToLearningCurve({
+        subject: signal.subject,
+        chapter: signal.chapter,
+        topic: signal.topic,
+        reason: signal.signal,
+        difficulty: 'hard',
+      });
+      if (result.ok) added++;
+    }
+  }
+
+  return added;
 }
 
 export function checkDifficultySignals(): DifficultySignal[] {

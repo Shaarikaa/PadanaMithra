@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Send, Volume2, Square, Sparkles, Bot, User as UserIcon, Brain, Lightbulb, BookOpen, Globe, RotateCcw, CircleCheck as CheckCircle2, Target, Compass, ChevronRight, GraduationCap } from 'lucide-react';
+import { Send, Volume2, Square, Sparkles, Bot, User as UserIcon, Brain, Lightbulb, BookOpen, Globe, RotateCcw, CircleCheck as CheckCircle2, Target, Compass, ChevronRight, GraduationCap, Mic, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,7 @@ import {
 } from '@/lib/guidedLearning';
 import { generateTutorReply } from '@/lib/mockData';
 import { addToLearningCurve, getLearningCurveSummary } from '@/lib/learningCurve';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 
 const LANGUAGES = [
   { value: 'en-US', label: 'English' },
@@ -108,6 +109,22 @@ export function AITutorPage() {
 
   const [lcAdded, setLcAdded] = useState<Record<string, boolean>>({});
   const [dueReviews, setDueReviews] = useState(0);
+
+  // Voice input for the chat input field
+  const voice = useVoiceInput({
+    language,
+    onTranscript: (text) => {
+      setInput((prev) => (prev ? prev + ' ' + text : text));
+    },
+  });
+
+  const handleMicToggle = () => {
+    if (voice.state === 'listening') {
+      voice.stop();
+    } else {
+      voice.start();
+    }
+  };
 
   useEffect(() => {
     getLearningCurveSummary().then((s) => setDueReviews(s.dueToday));
@@ -622,8 +639,33 @@ export function AITutorPage() {
           </ScrollArea>
 
           <form onSubmit={handleSubmit} className="border-t border-slate-100 p-3">
+            {voice.error && (
+              <p className="mb-2 flex items-center gap-1.5 text-xs text-rose-600">
+                <AlertCircle className="h-3.5 w-3.5" />
+                {voice.error}
+              </p>
+            )}
             <div className="flex gap-2">
               <Input id="tutor-input" value={input} onChange={(e) => setInput(e.target.value)} placeholder={session.phase === 'eliciting' || session.phase === 'hinting' ? "Share what you think..." : session.phase === 'practicing' ? "Type your answer to the practice question..." : "Ask about any topic..."} className="flex-1" />
+              {voice.isSupported && (
+                <Button
+                  type="button"
+                  onClick={handleMicToggle}
+                  variant="outline"
+                  className={cn(
+                    'shrink-0 border-slate-300',
+                    voice.state === 'listening' ? 'border-rose-200 bg-rose-50 text-rose-600' : 'text-indigo-600 hover:bg-indigo-50',
+                  )}
+                >
+                  {voice.state === 'listening' ? (
+                    <><span className="mr-1.5 h-2.5 w-2.5 animate-pulse rounded-full bg-rose-500" /><Square className="h-4 w-4" /></>
+                  ) : voice.state === 'processing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
               <Button type="submit" disabled={!input.trim() || thinking} className="bg-indigo-600 hover:bg-indigo-700">
                 <Send className="h-4 w-4" />
               </Button>

@@ -11,7 +11,7 @@ import { useApp } from '@/lib/AppContext';
 import { generateMockQuestions } from '@/lib/mockData';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
 import { recordAnswer, detectMisconception, explainWrongAnswer, generateSimilarQuestion, type MisconceptionResult, type WrongAnswerExplanation } from '@/lib/learningEngine';
-import { addToLearningCurve } from '@/lib/learningCurve';
+import { addToLearningCurve, autoAddFromDifficultySignals } from '@/lib/learningCurve';
 import type { MockQuestion } from '@/lib/types';
 
 const DURATION = 600;
@@ -76,6 +76,10 @@ export function MockTestPage() {
     }
     const scores = loadJSON<number[]>(STORAGE_KEYS.mockTestScores, []);
     scores.push(score);
+    saveJSON(STORAGE_KEYS.mockTestScores, scores);
+
+    // Auto-add topics with repeated wrong answers to Learning Curve
+    autoAddFromDifficultySignals().catch(() => { /* non-blocking */ });
     saveJSON(STORAGE_KEYS.mockTestScores, scores);
     setPhase('result');
   };
