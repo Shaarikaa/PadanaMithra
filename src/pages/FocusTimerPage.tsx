@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Timer, Play, Pause, RotateCcw, Maximize2, Minimize2, Coffee, Brain, CheckCircle2, ChevronRight, X, Zap, FlaskConical, Dna, Sigma, BookOpen, Target, TrendingUp } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, Maximize2, Minimize2, Coffee, Brain, CircleCheck as CheckCircle2, ChevronRight, X, Zap, FlaskConical, Dna, Sigma, BookOpen, Target, TrendingUp } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
