@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Lock, MessageSquare, Send, HelpCircle, BookOpen, ClipboardList, Calendar, Lightbulb, Compass, User as UserIcon, Clock, CheckCircle2, AlertCircle, Loader2, Bot, Sparkles, GraduationCap } from 'lucide-react';
+import { Lock, MessageSquare, Send, CircleHelp as HelpCircle, BookOpen, ClipboardList, Calendar, Lightbulb, Compass, User as UserIcon, Clock, CircleCheck as CheckCircle2, CircleAlert as AlertCircle, Loader as Loader2, Bot, Sparkles, GraduationCap } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -535,6 +535,3 @@ export function MentoringPage() {
     </AppShell>
   );
 }
-
-
-export { MentoringPage }
