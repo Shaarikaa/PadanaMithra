@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Timer, CheckCircle2, XCircle, ArrowRight, RotateCcw, Award, AlertCircle, Target, Lightbulb, Brain, HelpCircle } from 'lucide-react';
+import { Timer, CircleCheck as CheckCircle2, Circle as XCircle, ArrowRight, RotateCcw, Award, CircleAlert as AlertCircle, Target, Lightbulb, Brain, CircleHelp as HelpCircle } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

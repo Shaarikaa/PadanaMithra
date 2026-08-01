@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User as UserIcon, Cake, GraduationCap, BookOpen, Zap, FlaskConical, Dna, Sigma, Edit2, Check, ArrowRight, Target } from 'lucide-react';
+import { User as UserIcon, Cake, GraduationCap, BookOpen, Zap, FlaskConical, Dna, Sigma, CreditCard as Edit2, Check, ArrowRight, Target } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';

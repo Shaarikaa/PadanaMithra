@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Mic, Send, RotateCcw, BookOpen, CheckCircle2, AlertCircle, Lightbulb, ArrowRight, Sparkles, Target, ChevronRight } from 'lucide-react';
+import { Mic, Send, RotateCcw, BookOpen, CircleCheck as CheckCircle2, CircleAlert as AlertCircle, Lightbulb, ArrowRight, Sparkles, Target, ChevronRight } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

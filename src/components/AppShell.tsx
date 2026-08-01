@@ -1,4 +1,4 @@
-import { ArrowLeft, GraduationCap, LogOut, UserCircle } from 'lucide-react';
+import { ArrowLeft, GraduationCap, LogOut, CircleUser as UserCircle } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 import {

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { GraduationCap, User, Mail, Lock, ArrowLeft, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { GraduationCap, User, Mail, Lock, ArrowLeft, Eye, EyeOff, CircleAlert as AlertCircle } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

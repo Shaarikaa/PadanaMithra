@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Upload, ImageIcon, CheckCircle2, Lightbulb, RotateCcw, FileText, X, Loader2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, CircleCheck as CheckCircle2, Lightbulb, RotateCcw, FileText, X, Loader as Loader2 } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

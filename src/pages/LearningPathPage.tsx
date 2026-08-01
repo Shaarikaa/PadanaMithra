@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Route, CheckCircle2, Circle, AlertCircle, Target, ArrowRight, Brain, Sparkles, Zap, FlaskConical, Dna, Sigma } from 'lucide-react';
+import { Route, CircleCheck as CheckCircle2, Circle, CircleAlert as AlertCircle, Target, ArrowRight, Brain, Sparkles, Zap, FlaskConical, Dna, Sigma } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

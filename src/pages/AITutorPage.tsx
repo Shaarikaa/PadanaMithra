@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Send, Volume2, Square, Sparkles, Bot, User as UserIcon, Brain, Lightbulb, BookOpen, Globe, RotateCcw, CheckCircle2, Target, Compass, ChevronRight, GraduationCap } from 'lucide-react';
+import { Send, Volume2, Square, Sparkles, Bot, User as UserIcon, Brain, Lightbulb, BookOpen, Globe, RotateCcw, CircleCheck as CheckCircle2, Target, Compass, ChevronRight, GraduationCap } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
