@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { AppProvider, useApp } from '@/lib/AppContext';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -20,6 +21,7 @@ import { OfflinePage } from '@/pages/OfflinePage';
 import { ProNotesPage } from '@/pages/ProNotesPage';
 import { LearningPathPage } from '@/pages/LearningPathPage';
 import { TeachBackPage } from '@/pages/TeachBackPage';
+import { LearningCurvePage } from '@/pages/LearningCurvePage';
 import { FEATURES } from '@/lib/features';
 
 const FEATURE_PAGES: Record<string, () => React.ReactElement | null> = {
@@ -38,10 +40,19 @@ const FEATURE_PAGES: Record<string, () => React.ReactElement | null> = {
   'pro-notes': ProNotesPage,
   'learning-path': LearningPathPage,
   'teach-back': TeachBackPage,
+  'learning-curve': LearningCurvePage,
 };
 
 function Router() {
-  const { page } = useApp();
+  const { page, refreshPremium } = useApp();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      refreshPremium();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [refreshPremium]);
 
   if (page.name === 'landing') return <LandingPage />;
   if (page.name === 'login') return <LoginPage />;

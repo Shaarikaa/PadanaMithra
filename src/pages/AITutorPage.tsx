@@ -31,6 +31,7 @@ import {
   type ConceptUnlockedSummary,
 } from '@/lib/guidedLearning';
 import { generateTutorReply } from '@/lib/mockData';
+import { addToLearningCurve, getLearningCurveSummary } from '@/lib/learningCurve';
 
 const LANGUAGES = [
   { value: 'en-US', label: 'English' },
@@ -105,6 +106,26 @@ export function AITutorPage() {
     };
   }, []);
 
+  const [lcAdded, setLcAdded] = useState<Record<string, boolean>>({});
+  const [dueReviews, setDueReviews] = useState(0);
+
+  useEffect(() => {
+    getLearningCurveSummary().then((s) => setDueReviews(s.dueToday));
+  }, []);
+
+  const handleAddToLearningCurve = async (concept: ConceptEntry) => {
+    await addToLearningCurve({
+      subject: concept.subject,
+      chapter: concept.chapter,
+      topic: concept.topic,
+      reason: 'Added from AI Tutor',
+      difficulty: 'medium',
+    });
+    setLcAdded((prev) => ({ ...prev, [concept.topic]: true }));
+    const s = await getLearningCurveSummary();
+    setDueReviews(s.dueToday);
+  };
+
   const addBotMessage = (content: string, extras?: Partial<GuidedMessage>) => {
     const botMsg: GuidedMessage = {
       id: `b-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -146,6 +167,17 @@ export function AITutorPage() {
 
   const processUserMessage = (text: string) => {
     const intent = classifyIntent(text);
+    const lower = text.toLowerCase();
+
+    // Check for "give me something to study" — recommend due reviews
+    if (lower.includes('something to study') || lower.includes('what should i study') || lower.includes('what to study') || lower.includes('give me something')) {
+      if (dueReviews > 0) {
+        addBotMessage(`You have ${dueReviews} concept${dueReviews === 1 ? '' : 's'} due for review today in your Learning Curve. 🧠\n\nWould you like to review them now? You can go to the Learning Curve page to start.`, { isGuided: true });
+      } else {
+        addBotMessage(`You have no concepts due for review right now. 🎉\n\nTry asking me about a new topic, or take a mock test to find areas to improve!`);
+      }
+      return;
+    }
 
     // --- Casual conversation ---
     if (intent === 'casual') {
@@ -531,6 +563,30 @@ export function AITutorPage() {
                           <p className="text-sm font-medium text-indigo-700">{msg.conceptUnlocked.keyTakeaway}</p>
                         </div>
                       </div>
+                      {session.concept && (
+                        <button
+                          onClick={() => handleAddToLearningCurve(session.concept!)}
+                          disabled={lcAdded[session.concept.topic]}
+                          className={cn(
+                            'mt-3 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition',
+                            lcAdded[session.concept.topic]
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                              : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'
+                          )}
+                        >
+                          {lcAdded[session.concept.topic] ? (
+                            <>
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Added to Learning Curve
+                            </>
+                          ) : (
+                            <>
+                              <Brain className="h-3.5 w-3.5" />
+                              Add to Learning Curve
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   )}
 

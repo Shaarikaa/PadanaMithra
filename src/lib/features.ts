@@ -14,6 +14,7 @@ import {
   NotebookPen,
   Route,
   Mic,
+  Brain,
   type LucideIcon,
 } from 'lucide-react';
 import type { FeatureId } from './types';
@@ -110,8 +111,8 @@ export const FEATURES: FeatureConfig[] = [
   },
   {
     id: 'mentoring',
-    title: 'AI + Human Mentoring',
-    description: 'Book a 1-on-1 mentor session.',
+    title: 'Personal Mentor',
+    description: 'Continuous guidance from a dedicated mentor.',
     icon: MessageSquareHeart,
     premium: true,
     accent: 'bg-rose-100 text-rose-600',
@@ -147,5 +148,13 @@ export const FEATURES: FeatureConfig[] = [
     icon: Mic,
     premium: false,
     accent: 'bg-violet-100 text-violet-600',
+  },
+  {
+    id: 'learning-curve',
+    title: 'Learning Curve',
+    description: 'Spaced reviews to help you remember what you learn.',
+    icon: Brain,
+    premium: false,
+    accent: 'bg-emerald-100 text-emerald-600',
   },
 ];

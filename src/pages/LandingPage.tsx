@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { GraduationCap, Sparkles, ArrowRight, Bot, ScanLine, FileText, Layers, Users, ShieldCheck, Clock, MessageSquareHeart } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Bot, ScanLine, FileText, Layers, Users, ShieldCheck, Clock, MessageSquareHeart, Brain, GraduationCap as MentorCap } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 
 const HIGHLIGHTS = [
   { icon: Bot, label: 'AI Tutor', desc: 'Instant explanations' },
+  { icon: Brain, label: 'Learning Curve', desc: 'Remember longer' },
   { icon: ScanLine, label: 'Doubt Solver', desc: 'Scan & learn' },
   { icon: FileText, label: 'Smart Notes', desc: 'Auto-generated' },
   { icon: Layers, label: 'Flashcards', desc: '1-min revision' },
   { icon: Users, label: 'Study Rooms', desc: 'Learn together' },
-  { icon: Clock, label: 'Mock Tests', desc: 'Timed practice' },
 ];
 
 export function LandingPage() {
@@ -56,8 +56,9 @@ export function LandingPage() {
               Your friendly neighbourhood study buddy.
             </p>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Ask questions, scan your handwritten doubts, generate short notes, predict exam questions,
-              and revise with flashcards — all powered by AI. Built for students who want to learn smarter.
+              Ask questions, scan your handwritten doubts, generate short notes, and revise with spaced reviews.
+              Your AI companion helps you learn now, your Learning Curve helps you remember later, and your
+              Personal Mentor helps you keep going.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -77,7 +78,7 @@ export function LandingPage() {
               </span>
               <span className="flex items-center gap-1.5">
                 <Sparkles className="h-4 w-4 text-amber-500" />
-                10 free features
+                11 free features
               </span>
             </div>
           </div>
@@ -105,11 +106,11 @@ export function LandingPage() {
             <div className="absolute -right-4 bottom-16 hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-xl sm:block animate-float [animation-delay:2s]">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                  <MessageSquareHeart className="h-5 w-5" />
+                  <Brain className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-xs font-semibold text-slate-900">Study Room</p>
-                  <p className="text-[11px] text-slate-500">3 buddies online</p>
+                  <p className="text-xs font-semibold text-slate-900">Learning Curve</p>
+                  <p className="text-[11px] text-slate-500">3 reviews due</p>
                 </div>
               </div>
             </div>
@@ -121,7 +122,7 @@ export function LandingPage() {
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Everything you need to ace your exams</h2>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            Fourteen powerful tools in one place — from an AI tutor that explains any topic to a doubt solver that reads your handwriting.
+            Fourteen powerful tools in one place — from an AI tutor that explains any topic to spaced reviews that help you remember.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -144,6 +145,41 @@ export function LandingPage() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <div className="mb-10 text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Three layers of learning support</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+            AI helps you learn now. Learning Curve helps you remember later. Your Personal Mentor helps you keep going.
+          </p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+              <Bot className="h-7 w-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">AI Learning Companion</h3>
+            <p className="mt-2 text-sm text-slate-600">Instant explanations, guided hints, and practice — available 24/7, free for every student.</p>
+            <span className="mt-3 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-600">FREE</span>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+              <Brain className="h-7 w-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Learning Curve</h3>
+            <p className="mt-2 text-sm text-slate-600">Spaced reviews with active recall to help you remember what you learn — not just learn and forget.</p>
+            <span className="mt-3 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-600">FREE</span>
+          </div>
+          <div className="rounded-2xl border border-indigo-200 bg-indigo-50/30 p-6 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+              <MentorCap className="h-7 w-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Personal Mentor</h3>
+            <p className="mt-2 text-sm text-slate-600">Continuous human guidance from a dedicated mentor who understands your learning journey.</p>
+            <span className="mt-3 inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-600">PREMIUM · ₹99/mo</span>
+          </div>
         </div>
       </section>
 

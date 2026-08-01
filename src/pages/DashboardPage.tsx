@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Sparkles, Search, Zap, FlaskConical, Dna, Sigma, Bot, ScanLine, Timer, Layers, CalendarDays, ArrowRight, Target, Sun, Moon, CloudSun, Brain, Compass } from 'lucide-react';
+import { Sparkles, Search, Zap, FlaskConical, Dna, Sigma, Bot, ScanLine, Timer, Layers, CalendarDays, ArrowRight, Target, Sun, Moon, CloudSun, Brain, Compass, GraduationCap } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { FEATURES } from '@/lib/features';
 import { FeatureCard } from '@/components/FeatureCard';
@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils';
 import { SUBJECT_INFOS } from '@/lib/curriculum';
 import { loadJSON, STORAGE_KEYS } from '@/lib/storage';
 import { computeNextBestStep, computeLearningDNA, computeLearningInsights } from '@/lib/learningEngine';
+import { getLearningCurveSummary } from '@/lib/learningCurve';
+import { getAssignedMentor } from '@/lib/mentorService';
 
 const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap, FlaskConical, Dna, Sigma,
@@ -34,7 +36,7 @@ const QUICK_ACTIONS = [
 ];
 
 export function DashboardPage() {
-  const { profile, navigate } = useApp();
+  const { profile, navigate, isPremium } = useApp();
   const [query, setQuery] = useState('');
   const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
   const [lastScore, setLastScore] = useState<number | null>(null);
@@ -47,6 +49,13 @@ export function DashboardPage() {
   const nextStep = useMemo(() => computeNextBestStep(profile), [profile]);
   const learningDNA = useMemo(() => computeLearningDNA(profile), [profile]);
   const learningInsights = useMemo(() => computeLearningInsights(profile), [profile]);
+  const [lcSummary, setLcSummary] = useState<{ dueToday: number; dueItems: { id: string; subject: string; topic: string; review_interval_days: number }[] } | null>(null);
+  const [mentorName, setMentorName] = useState<string | null>(null);
+
+  useEffect(() => {
+    getLearningCurveSummary().then((s) => setLcSummary({ dueToday: s.dueToday, dueItems: s.dueItems.slice(0, 3).map((item) => ({ id: item.id, subject: item.subject, topic: item.topic, review_interval_days: item.review_interval_days })) }));
+    getAssignedMentor().then((a) => { if (a?.mentor) setMentorName(a.mentor.name); });
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -363,6 +372,66 @@ export function DashboardPage() {
               </div>
             )}
           </div>
+        </Card>
+      </div>
+
+      {/* Learning Curve + Mentor quick cards */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+        {/* Learning Curve */}
+        <Card className={cn('overflow-hidden border-slate-200 shadow-sm', lcSummary && lcSummary.dueToday > 0 ? 'border-indigo-200' : '')}>
+          <button onClick={() => navigate({ name: 'feature', id: 'learning-curve' })} className="w-full text-left">
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                  <Brain className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">My Learning Curve</p>
+                  <p className="text-xs text-slate-500">{lcSummary ? (lcSummary.dueToday > 0 ? `${lcSummary.dueToday} review${lcSummary.dueToday === 1 ? '' : 's'} waiting` : 'All caught up!') : 'Loading...'}</p>
+                </div>
+              </div>
+              {lcSummary && lcSummary.dueToday > 0 ? (
+                <span className="rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium text-white">Start Review</span>
+              ) : (
+                <ArrowRight className="h-4 w-4 text-slate-400" />
+              )}
+            </div>
+            {lcSummary && lcSummary.dueItems.length > 0 && (
+              <div className="border-t border-slate-100 px-4 py-3">
+                <div className="space-y-1.5">
+                  {lcSummary.dueItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-2 text-xs text-slate-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                      {item.subject} — {item.topic}
+                      <span className="ml-auto text-slate-400">Day {item.review_interval_days}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </button>
+        </Card>
+
+        {/* Personal Mentor */}
+        <Card className="overflow-hidden border-slate-200 shadow-sm">
+          <button onClick={() => navigate({ name: 'feature', id: 'mentoring' })} className="w-full text-left">
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                  <GraduationCap className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Personal Mentor</p>
+                  <p className="text-xs text-slate-500">{mentorName ? `Connected with ${mentorName.split(' — ')[1] || mentorName}` : isPremium ? 'Awaiting assignment' : 'Premium feature'}</p>
+                </div>
+              </div>
+              {isPremium ? (
+                <ArrowRight className="h-4 w-4 text-slate-400" />
+              ) : (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-600">PRO</span>
+              )}
+            </div>
+          </button>
         </Card>
       </div>
 

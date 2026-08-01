@@ -89,7 +89,8 @@ export type FeatureId =
   | 'offline'
   | 'pro-notes'
   | 'learning-path'
-  | 'teach-back';
+  | 'teach-back'
+  | 'learning-curve';
 
 // ---- Learning Intelligence Types ----
 

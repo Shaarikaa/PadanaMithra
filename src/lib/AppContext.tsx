@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { loadJSON, removeKey, saveJSON, STORAGE_KEYS } from './storage';
+import { isPremium as checkIsPremium } from './subscription';
 import type { User, StudentProfile } from './types';
 
 type Page =
@@ -14,6 +15,9 @@ type Page =
 interface AppContextValue {
   user: User | null;
   profile: StudentProfile | null;
+  isPremium: boolean;
+  premiumLoading: boolean;
+  refreshPremium: () => Promise<void>;
   login: (email: string, password: string) => { ok: boolean; error?: string };
   signup: (name: string, email: string, password: string) => { ok: boolean; error?: string };
   logout: () => void;
@@ -44,6 +48,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [page, setPage] = useState<Page>({ name: 'landing' });
+  const [premium, setPremium] = useState(false);
+  const [premiumLoading, setPremiumLoading] = useState(true);
 
   // Restore session on first load — check both user and onboarding state.
   useEffect(() => {
@@ -59,7 +65,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } else {
         setPage({ name: 'onboarding' });
       }
+    } else {
+      setPremiumLoading(false);
     }
+  }, []);
+
+  // Check premium status when user changes.
+  useEffect(() => {
+    if (!user) {
+      setPremium(false);
+      setPremiumLoading(false);
+      return;
+    }
+    setPremiumLoading(true);
+    checkIsPremium().then((result) => {
+      setPremium(result);
+      setPremiumLoading(false);
+    }).catch(() => {
+      setPremium(false);
+      setPremiumLoading(false);
+    });
+  }, [user]);
+
+  const refreshPremium = useCallback(async () => {
+    setPremiumLoading(true);
+    try {
+      const result = await checkIsPremium();
+      setPremium(result);
+    } catch {
+      setPremium(false);
+    }
+    setPremiumLoading(false);
   }, []);
 
   const login = useCallback((email: string, password: string) => {
@@ -142,8 +178,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AppContextValue>(
-    () => ({ user, profile, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
-    [user, profile, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
+    () => ({ user, profile, isPremium: premium, premiumLoading, refreshPremium, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
+    [user, profile, premium, premiumLoading, refreshPremium, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
