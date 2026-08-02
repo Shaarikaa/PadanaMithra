@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GraduationCap, ArrowRight, ArrowLeft, Check, Zap, FlaskConical, Dna, Sigma, Sparkles, Users, Mail, PartyPopper, Link2, Loader as Loader2 } from 'lucide-react';
+import { GraduationCap, ArrowRight, ArrowLeft, Check, Zap, FlaskConical, Dna, Sigma, Sparkles, Users, Mail, PartyPopper, Link2, Loader2 } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
