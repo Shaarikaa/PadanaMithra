@@ -6,6 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, x-user-id",
 };
 
+const INDIVIDUAL_PRICE = 9900; // ₹99.00 in paise
+const BUNDLE_PRICE = 49900; // ₹499.00 in paise
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -20,7 +23,7 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
-    const { userId, action } = await req.json();
+    const { userId, action, featureId } = await req.json();
 
     if (!userId) {
       return new Response(JSON.stringify({ error: "Missing userId" }), {
@@ -31,8 +34,7 @@ Deno.serve(async (req: Request) => {
 
     // If Stripe is not configured, return a structured response
     if (!stripeSecretKey) {
-      // For demo: mark subscription as active without real payment
-      // This allows the app to function for demonstration
+      // Demo mode — activate without real payment
       if (action === "demo_activate") {
         const { error } = await supabase
           .from("subscriptions")
@@ -76,7 +78,38 @@ Deno.serve(async (req: Request) => {
         return new Response(JSON.stringify({
           success: true,
           status: "active",
-          message: "Premium activated (demo mode — no real payment processed)",
+          message: "Premium bundle activated (demo mode — no real payment processed)",
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "demo_activate_feature" && featureId) {
+        const { error } = await supabase
+          .from("feature_entitlements")
+          .upsert({
+            user_id: userId,
+            feature_id: featureId,
+            status: "active",
+            provider: "demo",
+            entitlement_id: "demo_" + featureId + "_" + Date.now(),
+            started_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id,feature_id" });
+
+        if (error) {
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          status: "active",
+          featureId,
+          message: `Feature '${featureId}' activated (demo mode — no real payment processed)`,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -95,6 +128,7 @@ Deno.serve(async (req: Request) => {
     const stripe = await import("npm:stripe@14.21.0");
     const stripeClient = new stripe.default(stripeSecretKey);
 
+    // Create checkout for the full bundle (₹499)
     if (action === "create_checkout") {
       const origin = req.headers.get("origin") || "http://localhost:5173";
       const session = await stripeClient.checkout.sessions.create({
@@ -102,18 +136,17 @@ Deno.serve(async (req: Request) => {
         line_items: [{
           price_data: {
             currency: "inr",
-            product_data: { name: "PadanaMithra Premium" },
-            unit_amount: 9900, // ₹99.00
+            product_data: { name: "PadanaMithra Pro — All Features" },
+            unit_amount: BUNDLE_PRICE,
             recurring: { interval: "month" },
           },
           quantity: 1,
         }],
         success_url: `${origin}/?payment=success`,
         cancel_url: `${origin}/?payment=cancelled`,
-        metadata: { userId },
+        metadata: { userId, type: "bundle" },
       });
 
-      // Mark subscription as pending
       await supabase
         .from("subscriptions")
         .upsert({
@@ -133,6 +166,53 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Create checkout for an individual feature (₹99)
+    if (action === "create_feature_checkout" && featureId) {
+      const origin = req.headers.get("origin") || "http://localhost:5173";
+      const featureNames: Record<string, string> = {
+        "offline": "Offline Mode — PRO",
+        "mentoring": "Personal Mentor — PRO",
+        "video-classes": "Live Video Class — PRO",
+        "pro-notes": "Notes by Professionals — PRO",
+      };
+      const productName = featureNames[featureId] || `PadanaMithra — ${featureId}`;
+
+      const session = await stripeClient.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{
+          price_data: {
+            currency: "inr",
+            product_data: { name: productName },
+            unit_amount: INDIVIDUAL_PRICE,
+            recurring: { interval: "month" },
+          },
+          quantity: 1,
+        }],
+        success_url: `${origin}/?payment=success&feature=${featureId}`,
+        cancel_url: `${origin}/?payment=cancelled`,
+        metadata: { userId, type: "feature", featureId },
+      });
+
+      await supabase
+        .from("feature_entitlements")
+        .upsert({
+          user_id: userId,
+          feature_id: featureId,
+          status: "pending",
+          provider: "stripe",
+          entitlement_id: session.id,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id,feature_id" });
+
+      return new Response(JSON.stringify({
+        checkoutUrl: session.url,
+        sessionId: session.id,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check subscription + entitlement status
     if (action === "check_status") {
       const { data: sub } = await supabase
         .from("subscriptions")
@@ -140,8 +220,15 @@ Deno.serve(async (req: Request) => {
         .eq("user_id", userId)
         .maybeSingle();
 
+      const { data: entitlements } = await supabase
+        .from("feature_entitlements")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("status", "active");
+
       return new Response(JSON.stringify({
         subscription: sub,
+        entitlements: entitlements || [],
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

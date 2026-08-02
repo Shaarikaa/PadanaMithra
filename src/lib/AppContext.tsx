@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { loadJSON, removeKey, saveJSON, STORAGE_KEYS } from './storage';
-import { isPremium as checkIsPremium } from './subscription';
+import { isPremium as checkIsPremium, hasFeatureAccess as checkFeatureAccess } from './subscription';
 import type { Language } from './i18n';
 import type { TutorContextPayload } from './textbooks';
 export type { TutorContextPayload };
@@ -34,6 +34,7 @@ interface AppContextValue {
   isPremium: boolean;
   premiumLoading: boolean;
   refreshPremium: () => Promise<void>;
+  hasFeatureAccess: (featureId: string) => Promise<boolean>;
   language: Language;
   setLanguage: (lang: Language) => void;
   login: (email: string, password: string) => { ok: boolean; error?: string };
@@ -215,9 +216,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
+  const hasFeatureAccess = useCallback(async (featureId: string) => {
+    if (premium) return true;
+    return checkFeatureAccess(featureId);
+  }, [premium]);
+
   const value = useMemo<AppContextValue>(
-    () => ({ user, profile, isPremium: premium, premiumLoading, refreshPremium, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
-    [user, profile, premium, premiumLoading, refreshPremium, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
+    () => ({ user, profile, isPremium: premium, premiumLoading, refreshPremium, hasFeatureAccess, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
+    [user, profile, premium, premiumLoading, refreshPremium, hasFeatureAccess, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
