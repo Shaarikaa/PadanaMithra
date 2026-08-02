@@ -1,7 +1,6 @@
 export interface User {
   name: string;
   email: string;
-  password: string;
 }
 
 export interface StudentProfile {
@@ -77,7 +76,6 @@ export interface PredictedQuestion {
 
 export type FeatureId =
   | 'ai-tutor'
-  | 'doubt-solver'
   | 'short-notes'
   | 'mock-test'
   | 'flashcards'

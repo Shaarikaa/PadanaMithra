@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { GraduationCap, User, Mail, Lock, ArrowLeft, Eye, EyeOff, CircleAlert as AlertCircle } from 'lucide-react';
+import { GraduationCap, User, Mail, Lock, ArrowLeft, Eye, EyeOff, CircleAlert as AlertCircle, Loader as Loader2 } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,9 @@ export function SignupPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     if (!name.trim()) {
@@ -28,9 +29,11 @@ export function SignupPage() {
       setError('Password must be at least 4 characters long.');
       return;
     }
-    const result = signup(name.trim(), email.trim(), password);
+    setLoading(true);
+    const result = await signup(name.trim(), email.trim(), password);
     if (!result.ok) {
       setError(result.error ?? 'Sign up failed.');
+      setLoading(false);
     }
   };
 
@@ -48,7 +51,7 @@ export function SignupPage() {
         <div className="relative text-white">
           <h2 className="text-3xl font-bold leading-tight">Start your journey.</h2>
           <p className="mt-3 max-w-md text-indigo-100">
-            Join thousands of students learning smarter with an AI tutor, doubt solver, and smart revision tools.
+            Join thousands of students learning smarter with an AI tutor, smart notes, and revision tools.
           </p>
         </div>
         <p className="relative text-sm text-indigo-200">Free forever — no credit card required.</p>
@@ -86,6 +89,7 @@ export function SignupPage() {
                   onChange={(e) => setName(e.target.value)}
                   className="pl-10"
                   autoComplete="name"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -102,6 +106,7 @@ export function SignupPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   autoComplete="email"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -118,6 +123,7 @@ export function SignupPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
                   autoComplete="new-password"
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -137,8 +143,15 @@ export function SignupPage() {
               </div>
             )}
 
-            <Button type="submit" className="h-11 w-full bg-indigo-600 text-base hover:bg-indigo-700">
-              Create account
+            <Button type="submit" className="h-11 w-full bg-indigo-600 text-base hover:bg-indigo-700" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                'Create account'
+              )}
             </Button>
           </form>
 

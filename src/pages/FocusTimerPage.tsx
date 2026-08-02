@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Timer, Play, Pause, RotateCcw, Maximize2, Minimize2, Coffee, Brain, CircleCheck as CheckCircle2, ChevronRight, X, Zap, FlaskConical, Dna, Sigma, BookOpen, Target, TrendingUp } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, Maximize2, Minimize2, Coffee, Brain, CircleCheck as CheckCircle2, Zap, FlaskConical, Dna, Sigma, Target, TrendingUp, BellOff, PartyPopper } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,8 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/lib/AppContext';
 import { loadJSON, saveJSON } from '@/lib/storage';
+import { supabase } from '@/lib/supabaseClient';
+import { setFocusMode } from '@/hooks/use-toast';
 
 type TimerState = 'idle' | 'running' | 'paused' | 'break' | 'completed';
+type SessionStatus = 'completed' | 'paused' | 'cancelled';
 
 interface FocusSession {
   id: string;
@@ -24,7 +27,6 @@ interface FocusStats {
   todaySessions: number;
   todayFocusMinutes: number;
   streak: number;
-  lastSessionDate: string | null;
 }
 
 const PRESETS = [
@@ -54,7 +56,6 @@ function loadStats(): FocusStats {
     return d.toISOString().split('T')[0] === today && s.type === 'focus';
   });
 
-  // Calculate streak
   let streak = 0;
   const focusDates = new Set<string>();
   for (const s of sessions) {
@@ -63,7 +64,6 @@ function loadStats(): FocusStats {
     }
   }
   let checkDate = new Date();
-  // If no session today, start from yesterday
   if (!focusDates.has(checkDate.toISOString().split('T')[0])) {
     checkDate.setDate(checkDate.getDate() - 1);
   }
@@ -78,14 +78,41 @@ function loadStats(): FocusStats {
     todaySessions: todaySessions.length,
     todayFocusMinutes: todaySessions.reduce((sum, s) => sum + s.durationMinutes, 0),
     streak,
-    lastSessionDate: sessions.length > 0 ? new Date(sessions[sessions.length - 1].completedAt).toISOString() : null,
   };
 }
 
-function saveSession(session: FocusSession) {
+function saveSessionLocal(session: FocusSession) {
   const sessions = loadJSON<FocusSession[]>('focusSessions', []);
   sessions.push(session);
   saveJSON('focusSessions', sessions);
+}
+
+async function saveSessionDB(params: {
+  subject: string;
+  plannedDuration: number;
+  actualDuration: number;
+  startedAt: number;
+  status: SessionStatus;
+}): Promise<void> {
+  try {
+    const raw = localStorage.getItem('padanamithra:currentUser');
+    if (!raw) return;
+    const user = JSON.parse(raw) as { email: string };
+    if (!user.email) return;
+    const userId = user.email.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    await supabase.from('focus_sessions').insert({
+      user_id: userId,
+      subject: params.subject,
+      planned_duration_minutes: params.plannedDuration,
+      actual_duration_minutes: params.actualDuration,
+      started_at: new Date(params.startedAt).toISOString(),
+      ended_at: new Date().toISOString(),
+      status: params.status,
+    });
+  } catch {
+    // non-blocking — local storage is the fallback
+  }
 }
 
 export function FocusTimerPage() {
@@ -97,12 +124,16 @@ export function FocusTimerPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const [stats, setStats] = useState<FocusStats>(loadStats);
+
+  // Timestamp-based timer — avoids drift when tab is backgrounded
+  const endTimeRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionStartRef = useRef<number>(0);
+  const pausedAtRef = useRef<number>(0);
+  const accumulatedPausedRef = useRef<number>(0);
 
   const currentPreset = PRESETS[selectedPreset];
-  const isFocusPhase = timerState === 'running' || (timerState === 'idle' && secondsLeft === currentPreset.focus * 60);
   const isBreakPhase = timerState === 'break';
-
   const totalSeconds = isBreakPhase ? currentPreset.break * 60 : currentPreset.focus * 60;
   const progress = ((totalSeconds - secondsLeft) / totalSeconds) * 100;
 
@@ -113,116 +144,152 @@ export function FocusTimerPage() {
     }
   }, []);
 
+  // Cleanup on unmount — restore notifications
   useEffect(() => {
-    return stopInterval;
+    return () => {
+      stopInterval();
+      setFocusMode(false);
+    };
   }, [stopInterval]);
 
-  // Update stats when timer state changes to completed
   useEffect(() => {
     if (timerState === 'completed') {
       setStats(loadStats());
     }
   }, [timerState]);
 
-  const startTimer = () => {
-    setTimerState('running');
-    setSecondsLeft(currentPreset.focus * 60);
-
+  // Timestamp-based tick — calculates remaining time from end timestamp
+  const startTick = useCallback(() => {
     stopInterval();
     intervalRef.current = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          stopInterval();
-          // Save the focus session
-          saveSession({
-            id: crypto.randomUUID(),
-            subject: selectedSubject,
-            durationMinutes: currentPreset.focus,
-            completedAt: Date.now(),
-            type: 'focus',
-          });
-          setSessionCount((c) => c + 1);
-          // Start break
-          setTimerState('break');
-          setSecondsLeft(currentPreset.break * 60);
-          intervalRef.current = setInterval(() => {
-            setSecondsLeft((bp) => {
-              if (bp <= 1) {
-                stopInterval();
-                setTimerState('completed');
-                return 0;
-              }
-              return bp - 1;
-            });
-          }, 1000);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      const remaining = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        stopInterval();
+        handleTimerComplete();
+      }
+    }, 250);
+  }, [stopInterval]);
+
+  const handleTimerComplete = useCallback(() => {
+    if (isBreakPhase) {
+      setTimerState('completed');
+      setFocusMode(false);
+      return;
+    }
+
+    // Focus phase complete — save session, start break
+    const elapsedMin = currentPreset.focus;
+    saveSessionLocal({
+      id: crypto.randomUUID(),
+      subject: selectedSubject,
+      durationMinutes: elapsedMin,
+      completedAt: Date.now(),
+      type: 'focus',
+    });
+    saveSessionDB({
+      subject: selectedSubject,
+      plannedDuration: currentPreset.focus,
+      actualDuration: elapsedMin,
+      startedAt: sessionStartRef.current,
+      status: 'completed',
+    });
+    setSessionCount((c) => c + 1);
+
+    // Start break phase
+    setTimerState('break');
+    setFocusMode(false); // break = notifications resume
+    endTimeRef.current = Date.now() + currentPreset.break * 60 * 1000;
+    setSecondsLeft(currentPreset.break * 60);
+    startTick();
+  }, [isBreakPhase, currentPreset, selectedSubject, startTick]);
+
+  const startTimer = () => {
+    setTimerState('running');
+    setFocusMode(true); // suppress notifications
+    sessionStartRef.current = Date.now();
+    accumulatedPausedRef.current = 0;
+    endTimeRef.current = Date.now() + currentPreset.focus * 60 * 1000;
+    setSecondsLeft(currentPreset.focus * 60);
+    startTick();
   };
 
   const pauseTimer = () => {
     stopInterval();
+    pausedAtRef.current = Date.now();
     setTimerState('paused');
+    setFocusMode(false); // pause = notifications resume
   };
 
   const resumeTimer = () => {
+    // Shift end time by the paused duration
+    const pausedDuration = Date.now() - pausedAtRef.current;
+    accumulatedPausedRef.current += pausedDuration;
+    endTimeRef.current += pausedDuration;
     setTimerState('running');
-    intervalRef.current = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          stopInterval();
-          if (isBreakPhase) {
-            setTimerState('completed');
-            return 0;
-          } else {
-            saveSession({
-              id: crypto.randomUUID(),
-              subject: selectedSubject,
-              durationMinutes: currentPreset.focus,
-              completedAt: Date.now(),
-              type: 'focus',
-            });
-            setSessionCount((c) => c + 1);
-            setTimerState('break');
-            setSecondsLeft(currentPreset.break * 60);
-            intervalRef.current = setInterval(() => {
-              setSecondsLeft((bp) => {
-                if (bp <= 1) {
-                  stopInterval();
-                  setTimerState('completed');
-                  return 0;
-                }
-                return bp - 1;
-              });
-            }, 1000);
-            return 0;
-          }
-        }
-        return prev - 1;
+    setFocusMode(true); // re-suppress notifications
+    startTick();
+  };
+
+  const endSession = () => {
+    stopInterval();
+    // Calculate actual elapsed focus time (excluding pauses)
+    const elapsedMs = Date.now() - sessionStartRef.current - accumulatedPausedRef.current;
+    const elapsedMin = Math.max(0, Math.round(elapsedMs / 60000));
+
+    if (timerState === 'running' || timerState === 'paused') {
+      // Save partial session
+      saveSessionLocal({
+        id: crypto.randomUUID(),
+        subject: selectedSubject,
+        durationMinutes: elapsedMin > 0 ? elapsedMin : 0,
+        completedAt: Date.now(),
+        type: 'focus',
       });
-    }, 1000);
+      saveSessionDB({
+        subject: selectedSubject,
+        plannedDuration: currentPreset.focus,
+        actualDuration: elapsedMin,
+        startedAt: sessionStartRef.current,
+        status: 'cancelled',
+      });
+    }
+
+    setFocusMode(false);
+    setTimerState('idle');
+    setSecondsLeft(currentPreset.focus * 60);
   };
 
   const resetTimer = () => {
     stopInterval();
+    setFocusMode(false);
     setTimerState('idle');
     setSecondsLeft(currentPreset.focus * 60);
   };
 
   const skipToBreak = () => {
     stopInterval();
-    saveSession({
+    const elapsedMin = currentPreset.focus;
+    saveSessionLocal({
       id: crypto.randomUUID(),
       subject: selectedSubject,
-      durationMinutes: currentPreset.focus,
+      durationMinutes: elapsedMin,
       completedAt: Date.now(),
       type: 'focus',
     });
+    saveSessionDB({
+      subject: selectedSubject,
+      plannedDuration: currentPreset.focus,
+      actualDuration: elapsedMin,
+      startedAt: sessionStartRef.current,
+      status: 'completed',
+    });
     setSessionCount((c) => c + 1);
     setTimerState('break');
+    setFocusMode(false);
+    endTimeRef.current = Date.now() + currentPreset.break * 60 * 1000;
     setSecondsLeft(currentPreset.break * 60);
+    startTick();
   };
 
   const handlePresetChange = (idx: number) => {
@@ -231,9 +298,7 @@ export function FocusTimerPage() {
     setSecondsLeft(PRESETS[idx].focus * 60);
   };
 
-  const toggleFullscreen = () => {
-    setIsFullscreen((f) => !f);
-  };
+  const toggleFullscreen = () => setIsFullscreen((f) => !f);
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);
@@ -243,6 +308,7 @@ export function FocusTimerPage() {
 
   const currentSubject = SUBJECTS.find((s) => s.name === selectedSubject) || SUBJECTS[0];
   const SubjectIcon = currentSubject.icon;
+  const isFocusActive = timerState === 'running';
 
   // ---- Fullscreen distraction-free mode ----
   if (isFullscreen) {
@@ -266,18 +332,21 @@ export function FocusTimerPage() {
           </div>
         </div>
 
+        {isFocusActive && (
+          <div className="mb-4 flex items-center gap-2 rounded-full bg-indigo-500/20 px-4 py-1.5 text-sm text-indigo-200">
+            <span className="text-base">🎯</span>
+            Focus Mode Active
+          </div>
+        )}
+
         {/* Circular timer */}
         <div className="relative flex h-72 w-72 items-center justify-center">
           <svg className="absolute inset-0 -rotate-90" viewBox="0 0 200 200">
             <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
             <circle
-              cx="100"
-              cy="100"
-              r="90"
-              fill="none"
+              cx="100" cy="100" r="90" fill="none"
               stroke={isBreakPhase ? '#34d399' : '#818cf8'}
-              strokeWidth="8"
-              strokeLinecap="round"
+              strokeWidth="8" strokeLinecap="round"
               strokeDasharray={2 * Math.PI * 90}
               strokeDashoffset={2 * Math.PI * 90 * (1 - progress / 100)}
               className="transition-all duration-1000 ease-linear"
@@ -297,6 +366,14 @@ export function FocusTimerPage() {
           </div>
         </div>
 
+        {/* DND suggestion */}
+        {isFocusActive && (
+          <p className="mt-4 flex items-center gap-1.5 text-xs text-white/40">
+            <BellOff className="h-3.5 w-3.5" />
+            For complete device-wide blocking, turn on your phone's Do Not Disturb / Focus Mode.
+          </p>
+        )}
+
         {/* Controls */}
         <div className="mt-8 flex items-center gap-4">
           {timerState === 'idle' && (
@@ -314,13 +391,21 @@ export function FocusTimerPage() {
               <Button onClick={skipToBreak} size="lg" variant="ghost" className="h-14 px-6 text-white/60 hover:bg-white/10 hover:text-white">
                 Skip to Break
               </Button>
+              <Button onClick={endSession} size="lg" variant="ghost" className="h-14 px-6 text-rose-300/60 hover:bg-rose-500/10 hover:text-rose-300">
+                End Session
+              </Button>
             </>
           )}
           {timerState === 'paused' && (
-            <Button onClick={resumeTimer} size="lg" className="h-14 bg-indigo-600 px-8 text-lg hover:bg-indigo-700">
-              <Play className="mr-2 h-5 w-5" />
-              Resume
-            </Button>
+            <>
+              <Button onClick={resumeTimer} size="lg" className="h-14 bg-indigo-600 px-8 text-lg hover:bg-indigo-700">
+                <Play className="mr-2 h-5 w-5" />
+                Resume
+              </Button>
+              <Button onClick={endSession} size="lg" variant="ghost" className="h-14 px-6 text-rose-300/60 hover:bg-rose-500/10 hover:text-rose-300">
+                End Session
+              </Button>
+            </>
           )}
           {timerState === 'break' && (
             <div className="flex items-center gap-3 text-emerald-300">
@@ -330,13 +415,12 @@ export function FocusTimerPage() {
           )}
           {timerState === 'completed' && (
             <Button onClick={() => { resetTimer(); toggleFullscreen(); }} size="lg" className="h-14 bg-emerald-600 px-8 text-lg hover:bg-emerald-700">
-              <CheckCircle2 className="mr-2 h-5 w-5" />
+              <PartyPopper className="mr-2 h-5 w-5" />
               Done — Back to Dashboard
             </Button>
           )}
         </div>
 
-        {/* Session count */}
         {sessionCount > 0 && timerState !== 'completed' && (
           <p className="mt-6 text-sm text-white/40">
             {sessionCount} session{sessionCount === 1 ? '' : 's'} completed today
@@ -350,6 +434,17 @@ export function FocusTimerPage() {
   return (
     <AppShell title="Focus Timer" subtitle="Distraction-free study mode with timed sessions.">
       <div className="mx-auto max-w-4xl space-y-6">
+        {/* Completion banner */}
+        {timerState === 'completed' && (
+          <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 text-center shadow-sm animate-pop-in">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+              <PartyPopper className="h-7 w-7 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-bold text-emerald-900">Focus Session Complete!</h3>
+            <p className="mt-1 text-sm text-emerald-700">Great work! You completed your focus session.</p>
+          </Card>
+        )}
+
         {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-4">
           <Card className="border-slate-200 p-4 shadow-sm">
@@ -391,12 +486,18 @@ export function FocusTimerPage() {
           )}>
             {/* Phase label */}
             <div className="mb-4 flex items-center justify-center gap-2">
+              {isFocusActive && (
+                <Badge className="bg-indigo-100 text-indigo-700">
+                  <span className="mr-1">🎯</span>
+                  Focus Mode Active
+                </Badge>
+              )}
               {isBreakPhase ? (
                 <Badge className="bg-emerald-100 text-emerald-700">
                   <Coffee className="mr-1 h-3 w-3" />
                   Break Time
                 </Badge>
-              ) : (
+              ) : !isFocusActive && timerState !== 'completed' && (
                 <Badge className="bg-indigo-100 text-indigo-700">
                   <Brain className="mr-1 h-3 w-3" />
                   Focus Time
@@ -409,13 +510,9 @@ export function FocusTimerPage() {
               <svg className="absolute inset-0 -rotate-90" viewBox="0 0 200 200">
                 <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="10" />
                 <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  fill="none"
+                  cx="100" cy="100" r="90" fill="none"
                   stroke={isBreakPhase ? '#10b981' : '#6366f1'}
-                  strokeWidth="10"
-                  strokeLinecap="round"
+                  strokeWidth="10" strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 90}
                   strokeDashoffset={2 * Math.PI * 90 * (1 - progress / 100)}
                   className="transition-all duration-1000 ease-linear"
@@ -435,12 +532,20 @@ export function FocusTimerPage() {
               </div>
             </div>
 
+            {/* DND suggestion */}
+            {isFocusActive && (
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+                <BellOff className="h-3.5 w-3.5" />
+                For complete device-wide blocking, turn on your phone's Do Not Disturb / Focus Mode.
+              </p>
+            )}
+
             {/* Controls */}
             <div className="mt-8 flex items-center justify-center gap-3">
               {timerState === 'idle' && (
                 <Button onClick={startTimer} size="lg" className="h-14 bg-indigo-600 px-8 text-lg hover:bg-indigo-700">
                   <Play className="mr-2 h-5 w-5" />
-                  Start
+                  Start Focus
                 </Button>
               )}
               {timerState === 'running' && (
@@ -452,13 +557,21 @@ export function FocusTimerPage() {
                   <Button onClick={skipToBreak} size="lg" variant="ghost" className="h-14 px-6 text-slate-500">
                     Skip
                   </Button>
+                  <Button onClick={endSession} size="lg" variant="ghost" className="h-14 px-6 text-rose-500 hover:bg-rose-50">
+                    End
+                  </Button>
                 </>
               )}
               {timerState === 'paused' && (
-                <Button onClick={resumeTimer} size="lg" className="h-14 bg-indigo-600 px-8 text-lg hover:bg-indigo-700">
-                  <Play className="mr-2 h-5 w-5" />
-                  Resume
-                </Button>
+                <>
+                  <Button onClick={resumeTimer} size="lg" className="h-14 bg-indigo-600 px-8 text-lg hover:bg-indigo-700">
+                    <Play className="mr-2 h-5 w-5" />
+                    Resume
+                  </Button>
+                  <Button onClick={endSession} size="lg" variant="ghost" className="h-14 px-6 text-rose-500 hover:bg-rose-50">
+                    End Session
+                  </Button>
+                </>
               )}
               {timerState === 'break' && (
                 <div className="flex items-center gap-3 text-emerald-600">
@@ -470,11 +583,6 @@ export function FocusTimerPage() {
                 <Button onClick={resetTimer} size="lg" className="h-14 bg-emerald-600 px-8 text-lg hover:bg-emerald-700">
                   <CheckCircle2 className="mr-2 h-5 w-5" />
                   Start New Session
-                </Button>
-              )}
-              {(timerState === 'paused' || timerState === 'running') && (
-                <Button onClick={resetTimer} size="lg" variant="ghost" className="h-14 px-4 text-slate-400 hover:text-slate-600">
-                  <RotateCcw className="h-5 w-5" />
                 </Button>
               )}
               <Button
@@ -574,8 +682,9 @@ export function FocusTimerPage() {
           <div className="space-y-2 text-sm text-slate-600">
             <p className="flex items-start gap-2"><span className="text-indigo-600">•</span> Put your phone on silent and close other tabs.</p>
             <p className="flex items-start gap-2"><span className="text-indigo-600">•</span> Use fullscreen mode for maximum distraction-free studying.</p>
+            <p className="flex items-start gap-2"><span className="text-indigo-600">•</span> PadanaMithra notifications are automatically suppressed during Focus Mode.</p>
+            <p className="flex items-start gap-2"><span className="text-indigo-600">•</span> For device-wide blocking, enable Do Not Disturb on your phone.</p>
             <p className="flex items-start gap-2"><span className="text-indigo-600">•</span> Take breaks seriously — your brain needs them to retain information.</p>
-            <p className="flex items-start gap-2"><span className="text-indigo-600">•</span> Try to complete at least 2 sessions per study block.</p>
           </div>
         </Card>
       </div>

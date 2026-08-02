@@ -41,7 +41,6 @@ const translations: Record<string, TranslationEntry> = {
   'nav.pyqPredictor': { en: 'PYQ Predictor', ml: 'പിവൈക്യൂ പ്രഡിക്റ്റർ' },
   'nav.teachBack': { en: 'Teach Back', ml: 'ടീച്ച് ബാക്ക്' },
   'nav.mentoring': { en: 'Personal Mentor', ml: 'വ്യക്തിഗത മെന്റർ' },
-  'nav.doubtSolver': { en: 'Doubt Solver', ml: 'ഡൗട്ട് സോൾവർ' },
   'nav.offline': { en: 'Offline Mode', ml: 'ഓഫ്ലൈൻ മോഡ്' },
 
   // ---- Common ----

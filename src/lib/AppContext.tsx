@@ -5,6 +5,18 @@ import type { Language } from './i18n';
 import type { TutorContextPayload } from './textbooks';
 export type { TutorContextPayload };
 import type { User, StudentProfile } from './types';
+import {
+  signup as authSignup,
+  login as authLogin,
+  verifySession,
+  logout as authLogout,
+  saveSession,
+  getSessionToken,
+  clearSession,
+  fetchProfile,
+  saveProfileToBackend,
+  loadLocalProfile,
+} from './authService';
 
 // Module-level pending tutor context — set by Textbook Hub, consumed by AI Tutor on mount.
 let _pendingTutorContext: TutorContextPayload | null = null;
@@ -33,15 +45,16 @@ interface AppContextValue {
   profile: StudentProfile | null;
   isPremium: boolean;
   premiumLoading: boolean;
+  authLoading: boolean;
   refreshPremium: () => Promise<void>;
   hasFeatureAccess: (featureId: string) => Promise<boolean>;
   language: Language;
   setLanguage: (lang: Language) => void;
-  login: (email: string, password: string) => { ok: boolean; error?: string };
-  signup: (name: string, email: string, password: string) => { ok: boolean; error?: string };
-  logout: () => void;
-  completeOnboarding: (profile: Omit<StudentProfile, 'userId' | 'onboardingCompleted' | 'createdAt' | 'updatedAt'>) => void;
-  updateProfile: (updates: Partial<StudentProfile>) => void;
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ ok: boolean; error?: string; accountExists?: boolean }>;
+  logout: () => Promise<void>;
+  completeOnboarding: (profile: Omit<StudentProfile, 'userId' | 'onboardingCompleted' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateProfile: (updates: Partial<StudentProfile>) => Promise<void>;
   page: Page;
   navigate: (page: Page) => void;
 }
@@ -52,35 +65,38 @@ function emailToUserId(email: string): string {
   return email.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function loadProfile(userId: string): StudentProfile | null {
-  const all = loadJSON<Record<string, StudentProfile>>(STORAGE_KEYS.profiles, {});
-  return all[userId] ?? null;
-}
-
-function saveProfile(profile: StudentProfile): void {
-  const all = loadJSON<Record<string, StudentProfile>>(STORAGE_KEYS.profiles, {});
-  all[profile.userId] = profile;
-  saveJSON(STORAGE_KEYS.profiles, all);
-}
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [page, setPage] = useState<Page>({ name: 'landing' });
   const [premium, setPremium] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [language, setLanguageState] = useState<Language>(() => {
     return loadJSON<Language>(STORAGE_KEYS.language, 'en');
   });
 
+  const updateProfile = useCallback(
+    async (updates: Partial<StudentProfile>) => {
+      if (!profile || !user) return;
+      const updated: StudentProfile = {
+        ...profile,
+        ...updates,
+        updatedAt: Date.now(),
+      };
+      setProfile(updated);
+      await saveProfileToBackend(updated);
+    },
+    [profile, user],
+  );
+
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     saveJSON(STORAGE_KEYS.language, lang);
-    // Also update profile if it exists
     if (profile) {
       updateProfile({ preferredLanguage: lang });
     }
-  }, [profile]);
+  }, [profile, updateProfile]);
 
   // Restore language from profile on login
   useEffect(() => {
@@ -90,23 +106,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [profile?.preferredLanguage]);
 
-  // Restore session on first load — check both user and onboarding state.
+  // ---- Session restoration on app startup ----
+  // Check for a valid session token and restore the user if valid.
   useEffect(() => {
-    const savedUser = loadJSON<User | null>(STORAGE_KEYS.currentUser, null);
-    if (savedUser) {
-      const userId = emailToUserId(savedUser.email);
-      const savedProfile = loadProfile(userId);
-      setUser(savedUser);
-      setProfile(savedProfile);
-      // First login without onboarding → onboarding. Returning user → dashboard.
-      if (savedProfile && savedProfile.onboardingCompleted) {
-        setPage({ name: 'dashboard' });
-      } else {
-        setPage({ name: 'onboarding' });
+    const restoreSession = async () => {
+      setAuthLoading(true);
+      const sessionToken = getSessionToken();
+      const savedUser = loadJSON<User | null>(STORAGE_KEYS.currentUser, null);
+
+      if (sessionToken && savedUser) {
+        // Verify the session token with the backend
+        const result = await verifySession(sessionToken);
+        if (result.valid && result.user) {
+          const restoredUser: User = { email: result.user.email, name: result.user.name };
+          const userId = emailToUserId(restoredUser.email);
+          // Fetch profile from backend, fall back to local
+          let backendProfile = await fetchProfile(userId);
+          if (!backendProfile) {
+            const local = loadLocalProfile(userId);
+            if (local) {
+              saveProfileToBackend(local).catch(() => {});
+              backendProfile = local;
+            }
+          }
+          setUser(restoredUser);
+          setProfile(backendProfile);
+          saveJSON(STORAGE_KEYS.currentUser, restoredUser);
+          if (backendProfile && backendProfile.onboardingCompleted) {
+            setPage({ name: 'dashboard' });
+          } else {
+            setPage({ name: 'onboarding' });
+          }
+          setAuthLoading(false);
+          return;
+        }
+        // Session invalid/expired — clear it
+        clearSession();
+      } else if (savedUser) {
+        // Old-style localStorage session without a backend token — try to migrate.
+        // Check if this email has a backend account by attempting a silent verify.
+        // If not, just clear and show landing.
+        clearSession();
       }
-    } else {
-      setPremiumLoading(false);
-    }
+
+      setAuthLoading(false);
+    };
+
+    restoreSession();
   }, []);
 
   // Check premium status when user changes.
@@ -137,42 +183,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPremiumLoading(false);
   }, []);
 
-  const login = useCallback((email: string, password: string) => {
-    const users = loadJSON<User[]>(STORAGE_KEYS.users, []);
-    const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (!found) return { ok: false, error: 'No account found with that email. Please sign up first.' };
-    if (found.password !== password) return { ok: false, error: 'Incorrect password. Please try again.' };
-    const userId = emailToUserId(found.email);
-    const existingProfile = loadProfile(userId);
-    setUser(found);
+  const login = useCallback(async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
+    const result = await authLogin(email, password);
+    if (!result.ok || !result.user || !result.sessionToken) {
+      return { ok: false, error: result.error ?? 'Login failed.' };
+    }
+
+    const authUser: User = { email: result.user.email, name: result.user.name };
+    const userId = emailToUserId(authUser.email);
+
+    // Fetch existing profile from backend
+    let existingProfile = await fetchProfile(userId);
+    if (!existingProfile) {
+      // Try local fallback (migration from old localStorage)
+      const local = loadLocalProfile(userId);
+      if (local) {
+        saveProfileToBackend(local).catch(() => {});
+        existingProfile = local;
+      }
+    }
+
+    setUser(authUser);
     setProfile(existingProfile);
-    saveJSON(STORAGE_KEYS.currentUser, found);
+    saveSession(authUser, result.sessionToken);
+
     if (existingProfile && existingProfile.onboardingCompleted) {
       setPage({ name: 'dashboard' });
     } else {
       setPage({ name: 'onboarding' });
     }
+
     return { ok: true };
   }, []);
 
-  const signup = useCallback((name: string, email: string, password: string) => {
-    const users = loadJSON<User[]>(STORAGE_KEYS.users, []);
-    if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-      return { ok: false, error: 'An account with this email already exists. Please log in.' };
+  const signup = useCallback(async (name: string, email: string, password: string): Promise<{ ok: boolean; error?: string; accountExists?: boolean }> => {
+    const result = await authSignup(name, email, password);
+    if (!result.ok || !result.user || !result.sessionToken) {
+      return { ok: false, error: result.error ?? 'Sign up failed.', accountExists: result.accountExists };
     }
-    const newUser: User = { name, email, password };
-    users.push(newUser);
-    saveJSON(STORAGE_KEYS.users, users);
-    setUser(newUser);
+
+    const authUser: User = { email: result.user.email, name: result.user.name };
+    setUser(authUser);
     setProfile(null);
-    saveJSON(STORAGE_KEYS.currentUser, newUser);
-    // New signup → always go to onboarding.
+    saveSession(authUser, result.sessionToken);
     setPage({ name: 'onboarding' });
+
     return { ok: true };
   }, []);
 
   const completeOnboarding = useCallback(
-    (data: Omit<StudentProfile, 'userId' | 'onboardingCompleted' | 'createdAt' | 'updatedAt'>) => {
+    async (data: Omit<StudentProfile, 'userId' | 'onboardingCompleted' | 'createdAt' | 'updatedAt'>) => {
       if (!user) return;
       const userId = emailToUserId(user.email);
       const now = Date.now();
@@ -183,31 +243,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         createdAt: now,
         updatedAt: now,
       };
-      saveProfile(newProfile);
+      await saveProfileToBackend(newProfile);
       setProfile(newProfile);
       setPage({ name: 'dashboard' });
     },
     [user],
   );
 
-  const updateProfile = useCallback(
-    (updates: Partial<StudentProfile>) => {
-      if (!profile || !user) return;
-      const updated: StudentProfile = {
-        ...profile,
-        ...updates,
-        updatedAt: Date.now(),
-      };
-      saveProfile(updated);
-      setProfile(updated);
-    },
-    [profile, user],
-  );
-
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    const sessionToken = getSessionToken();
+    await authLogout(sessionToken);
+    clearSession();
     setUser(null);
     setProfile(null);
-    removeKey(STORAGE_KEYS.currentUser);
+    setPremium(false);
     setPage({ name: 'landing' });
   }, []);
 
@@ -222,8 +271,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [premium]);
 
   const value = useMemo<AppContextValue>(
-    () => ({ user, profile, isPremium: premium, premiumLoading, refreshPremium, hasFeatureAccess, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
-    [user, profile, premium, premiumLoading, refreshPremium, hasFeatureAccess, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
+    () => ({ user, profile, isPremium: premium, premiumLoading, authLoading, refreshPremium, hasFeatureAccess, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
+    [user, profile, premium, premiumLoading, authLoading, refreshPremium, hasFeatureAccess, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

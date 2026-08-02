@@ -5,6 +5,17 @@ import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
 
+// Focus Mode suppression — when true, non-critical toasts are blocked.
+let focusModeActive = false;
+
+export function setFocusMode(active: boolean): void {
+  focusModeActive = active;
+}
+
+export function isFocusModeActive(): boolean {
+  return focusModeActive;
+}
+
 type ToasterToast = ToastProps & {
   id: string;
   title?: React.ReactNode;
@@ -137,6 +148,9 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, 'id'>;
 
 function toast({ ...props }: Toast) {
+  // Suppress non-critical toasts during Focus Mode
+  if (focusModeActive && props.variant !== 'destructive') return;
+
   const id = genId();
 
   const update = (props: ToasterToast) =>

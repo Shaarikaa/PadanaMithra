@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Send, Volume2, Square, Sparkles, Bot, User as UserIcon, Brain, Lightbulb, BookOpen, Globe, RotateCcw, CircleCheck as CheckCircle2, Target, Compass, ChevronRight, GraduationCap, Mic, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
+import { Send, Volume2, Square, Sparkles, Bot, User as UserIcon, Brain, Lightbulb, BookOpen, Globe, RotateCcw, CircleCheck as CheckCircle2, Target, Compass, ChevronRight, GraduationCap, Mic, Loader as Loader2, CircleAlert as AlertCircle, Languages } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import type { ChatMessage } from '@/lib/types';
 import { useApp, consumePendingTutorContext, type TutorContextPayload } from '@/lib/AppContext';
 import { getChaptersForSubject } from '@/lib/curriculum';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
+import { LANGUAGES, getVoiceLanguageTag, isMalayalamText, type Language } from '@/lib/i18n';
+import { translateReplyToMalayalam } from '@/lib/mockData';
 import {
   classifyIntent,
   findConcept,
@@ -31,14 +33,7 @@ import {
   type ConceptUnlockedSummary,
 } from '@/lib/guidedLearning';
 import { generateTutorReply } from '@/lib/mockData';
-import { addToLearningCurve, getLearningCurveSummary } from '@/lib/learningCurve';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
-
-const LANGUAGES = [
-  { value: 'en-US', label: 'English' },
-  { value: 'ml-IN', label: 'Malayalam' },
-  { value: 'hi-IN', label: 'Hindi' },
-];
 
 const SUGGESTED = ['What is velocity?', 'Why does an object fall toward Earth?', 'What is photosynthesis?', 'Explain Ohms Law'];
 
@@ -61,7 +56,7 @@ interface GuidedMessage extends ChatMessage {
 }
 
 export function AITutorPage() {
-  const { profile } = useApp();
+  const { profile, language, setLanguage } = useApp();
   const tutorContext = profile ? {
     name: profile.fullName,
     classLevel: profile.classLevel,
@@ -75,9 +70,14 @@ export function AITutorPage() {
     loadJSON<boolean>(STORAGE_KEYS.whatDoYouKnowEnabled, true),
   );
 
-  const welcomeMsg = profile?.currentSubject && profile?.currentChapter
+  const welcomeMsgEn = profile?.currentSubject && profile?.currentChapter
     ? `Hi ${profile.fullName.split(' ')[0]}! I am your AI Learning Companion. I see you're studying ${profile.currentSubject} — ${profile.currentChapter}${profile.currentTopic ? ` (${profile.currentTopic})` : ''}.\n\nI won't just give you answers — I'll help you discover them yourself. Ask me anything!`
-    : "Hi! I am your AI Learning Companion. 😊\n\nI won't just give you answers — I'll help you discover them yourself. Ask me about any topic, and we'll explore it together!";
+    : "Hi! I am your AI Learning Companion. 😊\n\nI won't just give you answers — I'll help you discover them yourself. Ask about any topic, and we'll explore it together!";
+  const welcomeMsgMl = profile?.currentSubject && profile?.currentChapter
+    ? `നമസ്കാരം ${profile.fullName.split(' ')[0]}! ഞാൻ നിങ്ങളുടെ എഐ പഠന കൂട്ടാളി ആണ്. നിങ്ങൾ ${profile.currentSubject} — ${profile.currentChapter}${profile.currentTopic ? ` (${profile.currentTopic})` : ''} പഠിക്കുകയാണെന്ന് ഞാൻ കാണുന്നു.\n\nഞാൻ നേരെ ഉത്തരം തരില, നിങ്ങൾ സ്വയം കണ്ടെത്താൻ സഹായിക്കാം. എന്തും ചോദിക്കൂ!`
+    : "നമസ്കാരം! ഞാൻ നിങ്ങളുടെ എഐ പഠന കൂട്ടാളി ആണ്. 😊\n\nഞാൻ നേരെ ഉത്തരം തരില, നിങ്ങൾ സ്വയം കണ്ടെത്താൻ സഹായിക്കാം. ഏത് വിഷയത്തെക്കുറിച്ചും ചോദിക്കൂ, നമുക്ക് ഒരുമിച്ച് പഠിക്കാം!";
+
+  const welcomeMsg = language === 'ml' ? welcomeMsgMl : welcomeMsgEn;
 
   // Consume any pending tutor context from Textbook Hub
   const pendingCtx = consumePendingTutorContext();
@@ -97,11 +97,18 @@ export function AITutorPage() {
   ]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
-  const [language, setLanguage] = useState('en-US');
   const [speaking, setSpeaking] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [session, setSession] = useState<LearningSessionState>(() => createInitialSessionState(whatDoYouKnow));
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Translate bot response if Malayalam is selected
+  const localizeResponse = (text: string): string => {
+    if (language === 'ml' && !isMalayalamText(text)) {
+      return translateReplyToMalayalam(text);
+    }
+    return text;
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -120,12 +127,10 @@ export function AITutorPage() {
     };
   }, []);
 
-  const [lcAdded, setLcAdded] = useState<Record<string, boolean>>({});
-  const [dueReviews, setDueReviews] = useState(0);
 
   // Voice input for the chat input field
   const voice = useVoiceInput({
-    language,
+    language: getVoiceLanguageTag(language),
     onTranscript: (text) => {
       setInput((prev) => (prev ? prev + ' ' + text : text));
     },
@@ -139,28 +144,12 @@ export function AITutorPage() {
     }
   };
 
-  useEffect(() => {
-    getLearningCurveSummary().then((s) => setDueReviews(s.dueToday));
-  }, []);
-
-  const handleAddToLearningCurve = async (concept: ConceptEntry) => {
-    await addToLearningCurve({
-      subject: concept.subject,
-      chapter: concept.chapter,
-      topic: concept.topic,
-      reason: 'Added from AI Tutor',
-      difficulty: 'medium',
-    });
-    setLcAdded((prev) => ({ ...prev, [concept.topic]: true }));
-    const s = await getLearningCurveSummary();
-    setDueReviews(s.dueToday);
-  };
-
   const addBotMessage = (content: string, extras?: Partial<GuidedMessage>) => {
+    const localizedContent = localizeResponse(content);
     const botMsg: GuidedMessage = {
       id: `b-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       role: 'bot',
-      content,
+      content: localizedContent,
       timestamp: Date.now(),
       ...extras,
     };
@@ -198,16 +187,6 @@ export function AITutorPage() {
   const processUserMessage = (text: string) => {
     const intent = classifyIntent(text);
     const lower = text.toLowerCase();
-
-    // Check for "give me something to study" — recommend due reviews
-    if (lower.includes('something to study') || lower.includes('what should i study') || lower.includes('what to study') || lower.includes('give me something')) {
-      if (dueReviews > 0) {
-        addBotMessage(`You have ${dueReviews} concept${dueReviews === 1 ? '' : 's'} due for review today in your Learning Curve. 🧠\n\nWould you like to review them now? You can go to the Learning Curve page to start.`, { isGuided: true });
-      } else {
-        addBotMessage(`You have no concepts due for review right now. 🎉\n\nTry asking me about a new topic, or take a mock test to find areas to improve!`);
-      }
-      return;
-    }
 
     // --- Casual conversation ---
     if (intent === 'casual') {
@@ -439,7 +418,7 @@ export function AITutorPage() {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(content.replace(/\*\*/g, '').replace(/[💡🎯✓→•🌍📖🔄✅]/g, ''));
-    utterance.lang = language;
+    utterance.lang = getVoiceLanguageTag(language);
     utterance.onend = () => {
       setSpeaking(false);
       setSpeakingId(null);
@@ -496,18 +475,18 @@ export function AITutorPage() {
           {/* Voice language bar */}
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-2">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <Sparkles className="h-4 w-4 text-indigo-600" />
-              Voice language
+              <Languages className="h-4 w-4 text-indigo-600" />
+              {language === 'ml' ? 'ഭാഷ' : 'Language'}
             </div>
             <div className="flex items-center gap-2">
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="h-9 w-32">
+              <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+                <SelectTrigger className="h-9 w-36">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {LANGUAGES.map((l) => (
                     <SelectItem key={l.value} value={l.value}>
-                      {l.label}
+                      {l.flag} {l.nativeLabel}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -515,7 +494,7 @@ export function AITutorPage() {
               {speaking && (
                 <Button size="sm" variant="outline" onClick={stopSpeaking} className="h-9 border-rose-200 text-rose-600 hover:bg-rose-50">
                   <Square className="mr-1.5 h-3.5 w-3.5" />
-                  Stop
+                  {language === 'ml' ? 'നിർത്തുക' : 'Stop'}
                 </Button>
               )}
             </div>
@@ -593,30 +572,6 @@ export function AITutorPage() {
                           <p className="text-sm font-medium text-indigo-700">{msg.conceptUnlocked.keyTakeaway}</p>
                         </div>
                       </div>
-                      {session.concept && (
-                        <button
-                          onClick={() => handleAddToLearningCurve(session.concept!)}
-                          disabled={lcAdded[session.concept.topic]}
-                          className={cn(
-                            'mt-3 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition',
-                            lcAdded[session.concept.topic]
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
-                              : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'
-                          )}
-                        >
-                          {lcAdded[session.concept.topic] ? (
-                            <>
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              Added to Learning Curve
-                            </>
-                          ) : (
-                            <>
-                              <Brain className="h-3.5 w-3.5" />
-                              Add to Learning Curve
-                            </>
-                          )}
-                        </button>
-                      )}
                     </div>
                   )}
 

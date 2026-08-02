@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { GraduationCap, Sparkles, ArrowRight, Bot, ScanLine, FileText, Layers, Users, ShieldCheck, Clock, MessageSquareHeart, GraduationCap as MentorCap } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Bot, BookMarked, FileText, Layers, Users, ShieldCheck, Clock, MessageSquareHeart, GraduationCap as MentorCap } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 
 const HIGHLIGHTS = [
   { icon: Bot, label: 'AI Tutor', desc: 'Instant explanations' },
-  { icon: ScanLine, label: 'Doubt Solver', desc: 'Scan & learn' },
+  { icon: BookMarked, label: 'Textbook Hub', desc: 'Class resources' },
   { icon: FileText, label: 'Smart Notes', desc: 'Auto-generated' },
   { icon: Layers, label: 'Flashcards', desc: '1-min revision' },
   { icon: Users, label: 'Study Rooms', desc: 'Learn together' },
-];
+];;
 
 export function LandingPage() {
   const { navigate } = useApp();
@@ -58,7 +58,7 @@ export function LandingPage() {
               Your friendly neighbourhood study buddy.
             </p>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Ask questions, scan your handwritten doubts, generate short notes, and revise with flashcards.
+              Ask questions, generate short notes, and revise with flashcards.
               Your AI companion helps you learn now, and your Personal Mentor helps you keep going.
             </p>
 

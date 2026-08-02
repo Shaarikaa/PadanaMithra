@@ -302,15 +302,15 @@ function EditBasicInfoDialog({
   open: boolean;
   onClose: () => void;
   profile: import('@/lib/types').StudentProfile;
-  onSave: (u: Partial<import('@/lib/types').StudentProfile>) => void;
+  onSave: (u: Partial<import('@/lib/types').StudentProfile>) => Promise<void>;
 }) {
   const [name, setName] = useState(profile.fullName);
   const [dob, setDob] = useState(profile.dateOfBirth);
   const [error, setError] = useState('');
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) { setError('Name cannot be empty.'); return; }
-    onSave({ fullName: name.trim(), dateOfBirth: dob });
+    await onSave({ fullName: name.trim(), dateOfBirth: dob });
     onClose();
   };
 
@@ -353,7 +353,7 @@ function EditSubjectsDialog({
   open: boolean;
   onClose: () => void;
   profile: import('@/lib/types').StudentProfile;
-  onSave: (u: Partial<import('@/lib/types').StudentProfile>) => void;
+  onSave: (u: Partial<import('@/lib/types').StudentProfile>) => Promise<void>;
 }) {
   const [selected, setSelected] = useState<string[]>(profile.selectedSubjects);
   const [error, setError] = useState('');
@@ -363,10 +363,10 @@ function EditSubjectsDialog({
     setError('');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selected.length === 0) { setError('Please choose at least one subject.'); return; }
     const currentStillSelected = selected.includes(profile.currentSubject);
-    onSave({
+    await onSave({
       selectedSubjects: selected,
       currentSubject: currentStillSelected ? profile.currentSubject : selected[0],
       currentChapter: currentStillSelected ? profile.currentChapter : '',
@@ -430,7 +430,7 @@ function EditChapterDialog({
   open: boolean;
   onClose: () => void;
   profile: import('@/lib/types').StudentProfile;
-  onSave: (u: Partial<import('@/lib/types').StudentProfile>) => void;
+  onSave: (u: Partial<import('@/lib/types').StudentProfile>) => Promise<void>;
 }) {
   const [subject, setSubject] = useState(profile.currentSubject);
   const [chapter, setChapter] = useState(profile.currentChapter);
@@ -438,8 +438,8 @@ function EditChapterDialog({
   const chapters = getChaptersForSubject('class-9', subject);
   const topics = getTopicsForChapter('class-9', subject, chapter);
 
-  const handleSave = () => {
-    onSave({ currentSubject: subject, currentChapter: chapter, currentTopic: topic });
+  const handleSave = async () => {
+    await onSave({ currentSubject: subject, currentChapter: chapter, currentTopic: topic });
     onClose();
   };
 

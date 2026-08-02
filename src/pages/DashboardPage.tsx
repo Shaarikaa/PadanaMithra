@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Sparkles, Search, Zap, FlaskConical, Dna, Sigma, Bot, ScanLine, Timer, Layers, CalendarDays, ArrowRight, Target, Sun, Moon, CloudSun, Brain, Compass, GraduationCap } from 'lucide-react';
+import { Sparkles, Search, Zap, FlaskConical, Dna, Sigma, Bot, Timer, Layers, CalendarDays, ArrowRight, Target, Sun, Moon, CloudSun, Brain, Compass, GraduationCap, BookOpen, Crown } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { FEATURES } from '@/lib/features';
 import { FeatureCard } from '@/components/FeatureCard';
@@ -28,7 +28,6 @@ function getGreeting(): { text: string; Icon: React.ComponentType<{ className?: 
 
 const QUICK_ACTIONS = [
   { id: 'ai-tutor', label: 'Ask AI', icon: Bot, color: 'bg-indigo-100 text-indigo-600' },
-  { id: 'doubt-solver', label: 'Scan Question', icon: ScanLine, color: 'bg-rose-100 text-rose-600' },
   { id: 'mock-test', label: 'Mock Test', icon: Timer, color: 'bg-sky-100 text-sky-600' },
   { id: 'flashcards', label: '1-Min Revision', icon: Layers, color: 'bg-violet-100 text-violet-600' },
   { id: 'timetable', label: 'My Timetable', icon: CalendarDays, color: 'bg-cyan-100 text-cyan-600' },
@@ -62,8 +61,20 @@ export function DashboardPage() {
     );
   }, [query]);
 
+  const freeFeatures = useMemo(() => filtered.filter((f) => !f.premium), [filtered]);
+  const premiumFeatures = useMemo(() => filtered.filter((f) => f.premium), [filtered]);
+  const topToolIds = ['textbook-hub', 'focus-timer'];
+  const topTools = useMemo(
+    () => freeFeatures.filter((f) => topToolIds.includes(f.id)),
+    [freeFeatures],
+  );
+  const otherFreeFeatures = useMemo(
+    () => freeFeatures.filter((f) => !topToolIds.includes(f.id)),
+    [freeFeatures],
+  );
+
   const handleFeatureClick = (id: string, premium: boolean) => {
-    if (premium) {
+    if (premium && !isPremium) {
       const f = FEATURES.find((x) => x.id === id);
       setUpgradeFeature(f?.title ?? null);
       return;
@@ -436,21 +447,99 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Feature grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filtered.map((feature, i) => (
-          <FeatureCard
-            key={feature.id}
-            feature={feature}
-            index={i}
-            onClick={() => handleFeatureClick(feature.id, feature.premium)}
-          />
-        ))}
-      </div>
-
+      {/* No results */}
       {filtered.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center">
           <p className="text-slate-500">No features match "{query}".</p>
+        </div>
+      )}
+
+      {/* ---- TOP PRIORITY TOOLS ---- */}
+      {topTools.length > 0 && !query && (
+        <div className="mb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <Target className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-lg font-bold tracking-tight text-slate-900">Study Tools</h2>
+            <p className="text-sm text-slate-400">— your most-used, front and center</p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {topTools.map((feature, i) => (
+              <FeatureCard
+                key={feature.id}
+                feature={feature}
+                index={i}
+                onClick={() => handleFeatureClick(feature.id, feature.premium)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ---- FREE LEARNING TOOLS ---- */}
+      {(query ? freeFeatures : otherFreeFeatures).length > 0 && (
+        <div className="mb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <Bot className="h-5 w-5 text-emerald-600" />
+            <h2 className="text-lg font-bold tracking-tight text-slate-900">Free Learning</h2>
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">FREE</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {(query ? freeFeatures : otherFreeFeatures).map((feature, i) => (
+              <FeatureCard
+                key={feature.id}
+                feature={feature}
+                index={i}
+                onClick={() => handleFeatureClick(feature.id, feature.premium)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ---- PREMIUM LEARNING ---- */}
+      {premiumFeatures.length > 0 && (
+        <div className="mb-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-amber-500" />
+            <h2 className="text-lg font-bold tracking-tight text-slate-900">Premium Learning</h2>
+            <span className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">PREMIUM</span>
+          </div>
+          <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50/30 to-white p-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {premiumFeatures.map((feature, i) => (
+                <FeatureCard
+                  key={feature.id}
+                  feature={feature}
+                  index={i}
+                  onClick={() => handleFeatureClick(feature.id, feature.premium)}
+                />
+              ))}
+            </div>
+            {!isPremium && (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-white/70 p-5">
+                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Unlock All Premium Features</p>
+                    <p className="text-sm text-slate-500">Offline Mode, Personal Mentor, Live Video Class, Notes by Professionals.</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold text-amber-600">₹449</span>
+                    <span className="text-sm text-slate-400">/month</span>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setUpgradeFeature('Premium')}
+                  className="mt-4 w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                >
+                  <Crown className="mr-1.5 h-4 w-4" />
+                  Unlock All Premium Features — ₹449
+                </Button>
+                <p className="mt-2 text-center text-xs text-slate-400">
+                  Or unlock individual features for ₹99 each from the cards above.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
