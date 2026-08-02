@@ -21,7 +21,6 @@ import { OfflinePage } from '@/pages/OfflinePage';
 import { ProNotesPage } from '@/pages/ProNotesPage';
 import { LearningPathPage } from '@/pages/LearningPathPage';
 import { TeachBackPage } from '@/pages/TeachBackPage';
-import { LearningCurvePage } from '@/pages/LearningCurvePage';
 import { FocusTimerPage } from '@/pages/FocusTimerPage';
 import { ParentLoginPage } from '@/pages/ParentLoginPage';
 import { ParentDashboardPage } from '@/pages/ParentDashboardPage';
@@ -43,7 +42,6 @@ const FEATURE_PAGES: Record<string, () => React.ReactElement | null> = {
   'pro-notes': ProNotesPage,
   'learning-path': LearningPathPage,
   'teach-back': TeachBackPage,
-  'learning-curve': LearningCurvePage,
   'focus-timer': FocusTimerPage,
 };
 

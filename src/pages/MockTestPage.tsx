@@ -11,7 +11,6 @@ import { useApp } from '@/lib/AppContext';
 import { generateMockQuestions } from '@/lib/mockData';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
 import { recordAnswer, detectMisconception, explainWrongAnswer, generateSimilarQuestion, type MisconceptionResult, type WrongAnswerExplanation } from '@/lib/learningEngine';
-import { addToLearningCurve, autoAddFromDifficultySignals } from '@/lib/learningCurve';
 import type { MockQuestion } from '@/lib/types';
 
 const DURATION = 600;
@@ -78,8 +77,6 @@ export function MockTestPage() {
     scores.push(score);
     saveJSON(STORAGE_KEYS.mockTestScores, scores);
 
-    // Auto-add topics with repeated wrong answers to Learning Curve
-    autoAddFromDifficultySignals().catch(() => { /* non-blocking */ });
     saveJSON(STORAGE_KEYS.mockTestScores, scores);
     setPhase('result');
   };
@@ -304,18 +301,6 @@ function ReviewCard({
   const [showWhy, setShowWhy] = useState(false);
   const [showSimilar, setShowSimilar] = useState(false);
   const [similarQ, setSimilarQ] = useState<string | null>(null);
-  const [addedToLC, setAddedToLC] = useState(false);
-
-  const handleAddToLC = async () => {
-    await addToLearningCurve({
-      subject: meta.subject,
-      chapter: meta.chapter,
-      topic: meta.topic,
-      reason: 'Got wrong in mock test',
-      difficulty: 'hard',
-    });
-    setAddedToLC(true);
-  };
 
   const misconception: MisconceptionResult = !correct && userAns !== undefined
     ? detectMisconception(question.question)
@@ -429,33 +414,6 @@ function ReviewCard({
             </div>
           )}
 
-          {/* Add to Learning Curve */}
-          {!correct && userAns !== undefined && (
-            <div className="mt-3">
-              <button
-                onClick={handleAddToLC}
-                disabled={addedToLC}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition',
-                  addedToLC
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
-                    : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'
-                )}
-              >
-                {addedToLC ? (
-                  <>
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Added to Learning Curve
-                  </>
-                ) : (
-                  <>
-                    <Brain className="h-3.5 w-3.5" />
-                    Add to Learning Curve
-                  </>
-                )}
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </Card>

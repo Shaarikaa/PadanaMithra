@@ -150,14 +150,6 @@ export const FEATURES: FeatureConfig[] = [
     accent: 'bg-violet-100 text-violet-600',
   },
   {
-    id: 'learning-curve',
-    title: 'Learning Curve',
-    description: 'Spaced reviews to help you remember what you learn.',
-    icon: Brain,
-    premium: false,
-    accent: 'bg-emerald-100 text-emerald-600',
-  },
-  {
     id: 'focus-timer',
     title: 'Focus Timer',
     description: 'Distraction-free study mode with timed sessions.',

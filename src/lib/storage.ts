@@ -41,4 +41,5 @@ export const STORAGE_KEYS = {
   teachBackSessions: 'teachBackSessions',
   learningSignals: 'learningSignals',
   whatDoYouKnowEnabled: 'whatDoYouKnowEnabled',
+  language: 'language',
 } as const;

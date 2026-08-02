@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { GraduationCap, Sparkles, ArrowRight, Bot, ScanLine, FileText, Layers, Users, ShieldCheck, Clock, MessageSquareHeart, Brain, GraduationCap as MentorCap } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Bot, ScanLine, FileText, Layers, Users, ShieldCheck, Clock, MessageSquareHeart, GraduationCap as MentorCap } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 
 const HIGHLIGHTS = [
   { icon: Bot, label: 'AI Tutor', desc: 'Instant explanations' },
-  { icon: Brain, label: 'Learning Curve', desc: 'Remember longer' },
   { icon: ScanLine, label: 'Doubt Solver', desc: 'Scan & learn' },
   { icon: FileText, label: 'Smart Notes', desc: 'Auto-generated' },
   { icon: Layers, label: 'Flashcards', desc: '1-min revision' },
@@ -59,9 +58,8 @@ export function LandingPage() {
               Your friendly neighbourhood study buddy.
             </p>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Ask questions, scan your handwritten doubts, generate short notes, and revise with spaced reviews.
-              Your AI companion helps you learn now, your Learning Curve helps you remember later, and your
-              Personal Mentor helps you keep going.
+              Ask questions, scan your handwritten doubts, generate short notes, and revise with flashcards.
+              Your AI companion helps you learn now, and your Personal Mentor helps you keep going.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -108,12 +106,12 @@ export function LandingPage() {
             </div>
             <div className="absolute -right-4 bottom-16 hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-xl sm:block animate-float [animation-delay:2s]">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                  <Brain className="h-5 w-5" />
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                  <Layers className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-xs font-semibold text-slate-900">Learning Curve</p>
-                  <p className="text-[11px] text-slate-500">3 reviews due</p>
+                  <p className="text-xs font-semibold text-slate-900">Flashcards</p>
+                  <p className="text-[11px] text-slate-500">1-min revision</p>
                 </div>
               </div>
             </div>
@@ -153,26 +151,18 @@ export function LandingPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="mb-10 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Three layers of learning support</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Two layers of learning support</h2>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            AI helps you learn now. Learning Curve helps you remember later. Your Personal Mentor helps you keep going.
+            AI helps you learn now. Your Personal Mentor helps you keep going.
           </p>
         </div>
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 max-w-2xl mx-auto">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
               <Bot className="h-7 w-7" />
             </div>
             <h3 className="text-lg font-bold text-slate-900">AI Learning Companion</h3>
             <p className="mt-2 text-sm text-slate-600">Instant explanations, guided hints, and practice — available 24/7, free for every student.</p>
-            <span className="mt-3 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-600">FREE</span>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-              <Brain className="h-7 w-7" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900">Learning Curve</h3>
-            <p className="mt-2 text-sm text-slate-600">Spaced reviews with active recall to help you remember what you learn — not just learn and forget.</p>
             <span className="mt-3 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-600">FREE</span>
           </div>
           <div className="rounded-2xl border border-indigo-200 bg-indigo-50/30 p-6 text-center shadow-sm">

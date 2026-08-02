@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User as UserIcon, Cake, GraduationCap, BookOpen, Zap, FlaskConical, Dna, Sigma, CreditCard as Edit2, Check, ArrowRight, Target, Users, Mail, Unlink, Loader as Loader2 } from 'lucide-react';
+import { User as UserIcon, Cake, GraduationCap, BookOpen, Zap, FlaskConical, Dna, Sigma, CreditCard as Edit2, Check, ArrowRight, Target, Users, Mail, Unlink, Loader as Loader2, Languages } from 'lucide-react';
 import { useApp } from '@/lib/AppContext';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { cn } from '@/lib/utils';
 import { SUBJECT_INFOS, getChaptersForSubject, getTopicsForChapter } from '@/lib/curriculum';
 import { getParentConnection, disconnectParent } from '@/lib/parentService';
+import { LANGUAGES, type Language } from '@/lib/i18n';
 
 const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap, FlaskConical, Dna, Sigma,
@@ -45,7 +46,7 @@ function formatBirthday(dob: string): string {
 }
 
 export function ProfilePage() {
-  const { profile, updateProfile, navigate } = useApp();
+  const { profile, updateProfile, navigate, language, setLanguage } = useApp();
   const [editOpen, setEditOpen] = useState(false);
   const [editSubjectsOpen, setEditSubjectsOpen] = useState(false);
   const [editChapterOpen, setEditChapterOpen] = useState(false);
@@ -159,6 +160,38 @@ export function ProfilePage() {
               <p className="mt-2 text-sm text-slate-600">Topic: {profile.currentTopic}</p>
             )}
           </div>
+        </Card>
+
+        {/* Language preference */}
+        <Card className="border-slate-200 p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">Preferred Language</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l.value}
+                onClick={() => setLanguage(l.value as Language)}
+                className={cn(
+                  'flex items-center gap-2 rounded-xl border-2 px-4 py-3 transition',
+                  language === l.value
+                    ? 'border-indigo-600 bg-indigo-50'
+                    : 'border-slate-200 bg-white hover:border-indigo-200',
+                )}
+              >
+                <span className="text-lg">{l.flag}</span>
+                <span className={cn('text-sm font-medium', language === l.value ? 'text-indigo-700' : 'text-slate-700')}>
+                  {l.nativeLabel}
+                </span>
+                {language === l.value && <Check className="ml-1 h-4 w-4 text-indigo-600" />}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-slate-400">
+            {language === 'ml'
+              ? 'മലയാളം തിരഞ്ഞെടുത്താൽ, എഐ ട്യൂട്ടർ മലയാളത്തിൽ മറുപടി നൽകും. ശബ്ദ നിർദ്ദേശവും മലയാളത്തിൽ പ്രവർത്തിക്കും.'
+              : 'When Malayalam is selected, the AI Tutor responds in Malayalam and voice input recognizes Malayalam speech.'}
+          </p>
         </Card>
 
         {/* Parent Dashboard */}

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { loadJSON, removeKey, saveJSON, STORAGE_KEYS } from './storage';
 import { isPremium as checkIsPremium } from './subscription';
+import type { Language } from './i18n';
 import type { User, StudentProfile } from './types';
 
 type Page =
@@ -20,6 +21,8 @@ interface AppContextValue {
   isPremium: boolean;
   premiumLoading: boolean;
   refreshPremium: () => Promise<void>;
+  language: Language;
+  setLanguage: (lang: Language) => void;
   login: (email: string, password: string) => { ok: boolean; error?: string };
   signup: (name: string, email: string, password: string) => { ok: boolean; error?: string };
   logout: () => void;
@@ -52,6 +55,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [page, setPage] = useState<Page>({ name: 'landing' });
   const [premium, setPremium] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(true);
+  const [language, setLanguageState] = useState<Language>(() => {
+    return loadJSON<Language>(STORAGE_KEYS.language, 'en');
+  });
+
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    saveJSON(STORAGE_KEYS.language, lang);
+    // Also update profile if it exists
+    if (profile) {
+      updateProfile({ preferredLanguage: lang });
+    }
+  }, [profile]);
+
+  // Restore language from profile on login
+  useEffect(() => {
+    if (profile?.preferredLanguage) {
+      setLanguageState(profile.preferredLanguage);
+      saveJSON(STORAGE_KEYS.language, profile.preferredLanguage);
+    }
+  }, [profile?.preferredLanguage]);
 
   // Restore session on first load — check both user and onboarding state.
   useEffect(() => {
@@ -180,8 +203,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AppContextValue>(
-    () => ({ user, profile, isPremium: premium, premiumLoading, refreshPremium, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
-    [user, profile, premium, premiumLoading, refreshPremium, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
+    () => ({ user, profile, isPremium: premium, premiumLoading, refreshPremium, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate }),
+    [user, profile, premium, premiumLoading, refreshPremium, language, setLanguage, login, signup, logout, completeOnboarding, updateProfile, page, navigate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

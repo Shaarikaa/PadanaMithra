@@ -14,6 +14,7 @@ export interface StudentProfile {
   currentSubject: string;
   currentChapter: string;
   currentTopic: string;
+  preferredLanguage: 'en' | 'ml';
   onboardingCompleted: boolean;
   createdAt: number;
   updatedAt: number;
@@ -90,7 +91,6 @@ export type FeatureId =
   | 'pro-notes'
   | 'learning-path'
   | 'teach-back'
-  | 'learning-curve'
   | 'focus-timer';
 
 // ---- Learning Intelligence Types ----

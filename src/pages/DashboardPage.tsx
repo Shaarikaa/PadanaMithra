@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils';
 import { SUBJECT_INFOS } from '@/lib/curriculum';
 import { loadJSON, STORAGE_KEYS } from '@/lib/storage';
 import { computeNextBestStep, computeLearningDNA, computeLearningInsights } from '@/lib/learningEngine';
-import { getLearningCurveSummary } from '@/lib/learningCurve';
 import { getAssignedMentor } from '@/lib/mentorService';
 
 const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -49,11 +48,9 @@ export function DashboardPage() {
   const nextStep = useMemo(() => computeNextBestStep(profile), [profile]);
   const learningDNA = useMemo(() => computeLearningDNA(profile), [profile]);
   const learningInsights = useMemo(() => computeLearningInsights(profile), [profile]);
-  const [lcSummary, setLcSummary] = useState<{ dueToday: number; dueItems: { id: string; subject: string; topic: string; review_interval_days: number }[] } | null>(null);
   const [mentorName, setMentorName] = useState<string | null>(null);
 
   useEffect(() => {
-    getLearningCurveSummary().then((s) => setLcSummary({ dueToday: s.dueToday, dueItems: s.dueItems.slice(0, 3).map((item) => ({ id: item.id, subject: item.subject, topic: item.topic, review_interval_days: item.review_interval_days })) }));
     getAssignedMentor().then((a) => { if (a?.mentor) setMentorName(a.mentor.name); });
   }, []);
 
@@ -375,68 +372,8 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Learning Curve due notification */}
-      {lcSummary && lcSummary.dueToday > 0 && (
-        <div className="mb-6 flex items-center gap-4 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 p-4 animate-fade-in-up">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
-            <Brain className="h-5 w-5" />
-          </span>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-indigo-900">Learning Curve Reminder</p>
-            <p className="text-xs text-indigo-700">
-              You have {lcSummary.dueToday} topic{lcSummary.dueToday === 1 ? '' : 's'} ready for revision.
-              {lcSummary.dueItems.length > 0 && ` Next: ${lcSummary.dueItems[0].subject} — ${lcSummary.dueItems[0].topic}`}
-            </p>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => navigate({ name: 'feature', id: 'learning-curve' })}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            Review Now
-            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
-
-      {/* Learning Curve + Mentor quick cards */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        {/* Learning Curve */}
-        <Card className={cn('overflow-hidden border-slate-200 shadow-sm', lcSummary && lcSummary.dueToday > 0 ? 'border-indigo-200' : '')}>
-          <button onClick={() => navigate({ name: 'feature', id: 'learning-curve' })} className="w-full text-left">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                  <Brain className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">My Learning Curve</p>
-                  <p className="text-xs text-slate-500">{lcSummary ? (lcSummary.dueToday > 0 ? `${lcSummary.dueToday} review${lcSummary.dueToday === 1 ? '' : 's'} waiting` : 'All caught up!') : 'Loading...'}</p>
-                </div>
-              </div>
-              {lcSummary && lcSummary.dueToday > 0 ? (
-                <span className="rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium text-white">Start Review</span>
-              ) : (
-                <ArrowRight className="h-4 w-4 text-slate-400" />
-              )}
-            </div>
-            {lcSummary && lcSummary.dueItems.length > 0 && (
-              <div className="border-t border-slate-100 px-4 py-3">
-                <div className="space-y-1.5">
-                  {lcSummary.dueItems.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 text-xs text-slate-600">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                      {item.subject} — {item.topic}
-                      <span className="ml-auto text-slate-400">Day {item.review_interval_days}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </button>
-        </Card>
-
-        {/* Personal Mentor */}
+      {/* Mentor quick card */}
+      <div className="mb-6">
         <Card className="overflow-hidden border-slate-200 shadow-sm">
           <button onClick={() => navigate({ name: 'feature', id: 'mentoring' })} className="w-full text-left">
             <div className="flex items-center justify-between p-4">

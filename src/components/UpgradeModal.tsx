@@ -10,7 +10,7 @@ const PRO_BENEFITS = [
   'Mentor Chat — message your dedicated mentor',
   'Follow-up Support — mentor tracks your progress',
   'Personalized study guidance from your mentor',
-  'Everything in Free — AI Tutor, Learning Curve, Mock Tests',
+  'Everything in Free — AI Tutor, Mock Tests, Flashcards',
 ];
 
 export function UpgradeModal({ open, onClose, featureName }: { open: boolean; onClose: () => void; featureName?: string }) {

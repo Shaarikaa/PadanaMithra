@@ -25,12 +25,10 @@ Deno.serve(async (req: Request) => {
 
     // ---- generate_report ----
     // Generates a monthly report from real student activity data.
-    // Student activity is stored in:
-    //   - learning_curve_items / learning_curve_reviews (Supabase)
-    //   - answerHistory, mockTestScores, teachBackSessions, learningSignals (localStorage — not accessible server-side)
+    // Student activity is stored in focus_sessions (Supabase) and
+    // answerHistory, mockTestScores, teachBackSessions (localStorage — not accessible server-side)
     // Since localStorage data is not available server-side, we aggregate from
-    // Supabase tables (learning_curve_items, learning_curve_reviews) which ARE
-    // the persistent store for spaced-repetition activity.
+    // Supabase tables (focus_sessions) which ARE the persistent store for study activity.
 
     if (action === "generate_report") {
       const { studentUserId, parentId, month, year } = body;
@@ -65,46 +63,39 @@ Deno.serve(async (req: Request) => {
       const startDate = new Date(Date.UTC(year, month - 1, 1));
       const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59));
 
-      // Fetch learning curve items created in this month
-      const { data: lcItems } = await supabase
-        .from("learning_curve_items")
-        .select("subject, chapter, topic, created_at")
+      // Fetch focus sessions completed in this month
+      const { data: focusSessions } = await supabase
+        .from("focus_sessions")
+        .select("subject, planned_duration_minutes, actual_duration_minutes, started_at, status")
         .eq("user_id", studentUserId)
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .gte("started_at", startDate.toISOString())
+        .lte("started_at", endDate.toISOString());
 
-      // Fetch learning curve reviews in this month
-      const { data: lcReviews } = await supabase
-        .from("learning_curve_reviews")
-        .select("item_id, result, reviewed_at")
-        .eq("user_id", studentUserId)
-        .gte("reviewed_at", startDate.toISOString())
-        .lte("reviewed_at", endDate.toISOString());
-
-      // Aggregate subject activity
+      // Aggregate subject activity from focus sessions
       const subjectActivity: Record<string, number> = {};
       const topicsSet = new Set<string>();
       const subjectsSet = new Set<string>();
 
-      if (lcItems) {
-        for (const item of lcItems) {
-          subjectsSet.add(item.subject);
-          topicsSet.add(item.topic);
-          subjectActivity[item.subject] = (subjectActivity[item.subject] || 0) + 1;
+      if (focusSessions) {
+        for (const session of focusSessions) {
+          if (session.subject) {
+            subjectsSet.add(session.subject);
+            subjectActivity[session.subject] = (subjectActivity[session.subject] || 0) + 1;
+          }
         }
       }
 
-      const revisionSessions = lcReviews ? lcReviews.length : 0;
-      const questionsPracticed = lcReviews
-        ? lcReviews.filter((r: Record<string, unknown>) => r.result === "correct" || r.result === "incorrect" || r.result === "partial").length
-        : 0;
+      const revisionSessions = 0;
+      const questionsPracticed = 0;
 
-      // Estimate study time: ~10 minutes per learning curve item + ~5 min per review
-      const studyTimeMinutes = (lcItems ? lcItems.length * 10 : 0) + revisionSessions * 5;
+      // Study time: sum of actual focus session durations
+      const studyTimeMinutes = focusSessions
+        ? focusSessions.reduce((sum: number, s: Record<string, unknown>) => sum + (s.actual_duration_minutes as number || 0), 0)
+        : 0;
 
       const subjectsStudied = subjectsSet.size;
       const topicsStudied = topicsSet.size;
-      const practiceSessions = lcItems ? lcItems.length : 0;
+      const practiceSessions = focusSessions ? focusSessions.length : 0;
 
       // Generate factual summary
       const subjectList = Array.from(subjectsSet).join(", ");
