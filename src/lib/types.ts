@@ -91,7 +91,8 @@ export type FeatureId =
   | 'pro-notes'
   | 'learning-path'
   | 'teach-back'
-  | 'focus-timer';
+  | 'focus-timer'
+  | 'textbook-hub';
 
 // ---- Learning Intelligence Types ----
 

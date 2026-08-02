@@ -15,6 +15,7 @@ import {
   Route,
   Mic,
   Brain,
+  BookMarked,
   type LucideIcon,
 } from 'lucide-react';
 import type { FeatureId } from './types';
@@ -156,5 +157,13 @@ export const FEATURES: FeatureConfig[] = [
     icon: Timer,
     premium: false,
     accent: 'bg-amber-100 text-amber-600',
+  },
+  {
+    id: 'textbook-hub',
+    title: 'Textbook Hub',
+    description: 'Find official SCERT Kerala textbooks and ask questions.',
+    icon: BookMarked,
+    premium: false,
+    accent: 'bg-blue-100 text-blue-600',
   },
 ];

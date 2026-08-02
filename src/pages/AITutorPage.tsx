@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Send, Volume2, Square, Sparkles, Bot, User as UserIcon, Brain, Lightbulb, BookOpen, Globe, RotateCcw, CircleCheck as CheckCircle2, Target, Compass, ChevronRight, GraduationCap, Mic, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/lib/types';
-import { useApp } from '@/lib/AppContext';
+import { useApp, consumePendingTutorContext, type TutorContextPayload } from '@/lib/AppContext';
 import { getChaptersForSubject } from '@/lib/curriculum';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
 import {
@@ -79,8 +79,21 @@ export function AITutorPage() {
     ? `Hi ${profile.fullName.split(' ')[0]}! I am your AI Learning Companion. I see you're studying ${profile.currentSubject} — ${profile.currentChapter}${profile.currentTopic ? ` (${profile.currentTopic})` : ''}.\n\nI won't just give you answers — I'll help you discover them yourself. Ask me anything!`
     : "Hi! I am your AI Learning Companion. 😊\n\nI won't just give you answers — I'll help you discover them yourself. Ask me about any topic, and we'll explore it together!";
 
+  // Consume any pending tutor context from Textbook Hub
+  const pendingCtx = consumePendingTutorContext();
+  const textbookContextMsg = useMemo(() => {
+    if (!pendingCtx) return null;
+    const subj = pendingCtx.subject;
+    const med = pendingCtx.medium;
+    const cls = pendingCtx.className;
+    if (language === 'ml') {
+      return `നമസ്കാരം! നിങ്ങൾ ${cls} ${subj} (${med} മീഡിയം) പഠിക്കുകയാണെന്ന് ഞാൻ കാണുന്നു.\n\nഈ വിഷയത്തെക്കുറിച്ച് എന്തും ചോദിക്കൂ. ശ്രദ്ധിക്കുക: പാഠ്യപുസ്തകത്തിന്റെ ഉള്ളടക്കം എനിക്ക് നേരിട്ട് ലഭ്യമല്ല. ഒരു പ്രത്യേക അധ്യായത്തെക്കുറിച്ച് ചോദിക്കുമ്പോൾ, ഔദ്യോഗിക പാഠ്യപുസ്തകം തുറക്കുക, പ്രസക്തമായ താൾ പദാനമിഥ്രയിലേക്ക് അപ്ലോഡ് ചെയ്യുക, ഞാൻ വിശദീകരിക്കാം.`;
+    }
+    return `Hi! I see you're studying ${cls} ${subj} (${med} Medium).\n\nAsk me anything about this subject. Please note: I don't have direct access to the textbook's content. When you ask about a specific chapter, open the official textbook and upload the relevant page to Padanamithra if you want me to explain that exact content.`;
+  }, [pendingCtx, language]);
+
   const [messages, setMessages] = useState<GuidedMessage[]>([
-    { id: 'welcome', role: 'bot', content: welcomeMsg, timestamp: Date.now() },
+    { id: 'welcome', role: 'bot', content: textbookContextMsg || welcomeMsg, timestamp: Date.now() },
   ]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);

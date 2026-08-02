@@ -2,7 +2,20 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { loadJSON, removeKey, saveJSON, STORAGE_KEYS } from './storage';
 import { isPremium as checkIsPremium } from './subscription';
 import type { Language } from './i18n';
+import type { TutorContextPayload } from './textbooks';
+export type { TutorContextPayload };
 import type { User, StudentProfile } from './types';
+
+// Module-level pending tutor context — set by Textbook Hub, consumed by AI Tutor on mount.
+let _pendingTutorContext: TutorContextPayload | null = null;
+export function setPendingTutorContext(ctx: TutorContextPayload | null) {
+  _pendingTutorContext = ctx;
+}
+export function consumePendingTutorContext(): TutorContextPayload | null {
+  const ctx = _pendingTutorContext;
+  _pendingTutorContext = null;
+  return ctx;
+}
 
 type Page =
   | { name: 'landing' }

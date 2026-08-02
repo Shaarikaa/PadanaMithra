@@ -42,4 +42,5 @@ export const STORAGE_KEYS = {
   learningSignals: 'learningSignals',
   whatDoYouKnowEnabled: 'whatDoYouKnowEnabled',
   language: 'language',
+  textbookStudyList: 'textbookStudyList',
 } as const;
