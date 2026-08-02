@@ -27,6 +27,10 @@ async function callAuthFunction(body: Record<string, unknown>): Promise<Record<s
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+  if (!supabaseUrl || !anonKey) {
+    return { error: 'Padanamithra is not configured. Please contact support.' };
+  }
+
   const response = await fetch(`${supabaseUrl}/functions/v1/student-auth`, {
     method: 'POST',
     headers: {

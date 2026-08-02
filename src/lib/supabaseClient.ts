@@ -1,7 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 // Custom fetch that injects the x-user-id header from localStorage on every request.
 // This allows RLS policies to identify the current user without Supabase Auth.
@@ -10,8 +12,6 @@ const supabaseFetch: typeof fetch = (input, init) => {
   const headers = new Headers(init?.headers);
 
   try {
-    // Try the session token first (new auth system), then fall back to currentUser
-    const sessionToken = localStorage.getItem('padanamithra:sessionToken');
     const rawUser = localStorage.getItem('padanamithra:currentUser');
 
     if (rawUser) {
@@ -21,8 +21,6 @@ const supabaseFetch: typeof fetch = (input, init) => {
         headers.set('x-user-id', userId);
       }
     }
-    // Note: sessionToken is used by the auth edge function, not by RLS directly.
-    // The x-user-id header is what RLS policies use to identify the user.
   } catch {
     // ignore parse errors
   }
@@ -30,11 +28,18 @@ const supabaseFetch: typeof fetch = (input, init) => {
   return fetch(input, { ...init, headers });
 };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: false,
+// Initialize with fallback values so the app never crashes at module load.
+// When env vars are missing, isSupabaseConfigured is false and all queries
+// return empty/error results gracefully via the existing error handling.
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl ?? 'https://placeholder.supabase.co',
+  supabaseAnonKey ?? 'placeholder-anon-key',
+  {
+    auth: {
+      persistSession: false,
+    },
+    global: {
+      fetch: supabaseFetch,
+    },
   },
-  global: {
-    fetch: supabaseFetch,
-  },
-});
+);
