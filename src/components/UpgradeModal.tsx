@@ -45,7 +45,7 @@ export function UpgradeModal({ open, onClose, featureName }: { open: boolean; on
 
     try {
       if (isBundle) {
-        // Bundle checkout (₹499)
+        // Bundle checkout (₹449)
         const result = await initiateCheckout();
         if (result.success && result.checkoutUrl) {
           window.location.href = result.checkoutUrl;
@@ -147,7 +147,7 @@ export function UpgradeModal({ open, onClose, featureName }: { open: boolean; on
                   <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-center">
                     <p className="text-xs font-medium text-slate-500">All Access Bundle</p>
                     <div className="mt-1 flex items-center justify-center gap-2">
-                      <span className="text-3xl font-bold text-amber-600">₹499</span>
+                      <span className="text-3xl font-bold text-amber-600">₹449</span>
                       <span className="text-sm text-muted-foreground">/month</span>
                     </div>
                     <p className="mt-1 text-xs text-slate-400">Unlocks ALL Pro features together</p>
@@ -184,7 +184,7 @@ export function UpgradeModal({ open, onClose, featureName }: { open: boolean; on
                 ) : isBundle ? (
                   <>
                     <Crown className="mr-1.5 h-4 w-4" />
-                    Unlock All Premium Features — ₹499
+                    Unlock All Premium Features — ₹449
                   </>
                 ) : (
                   <>

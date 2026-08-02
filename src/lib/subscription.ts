@@ -4,7 +4,7 @@
 //
 // Two pricing tiers:
 //   - Individual feature: ₹99/month (one premium feature unlocked)
-//   - Complete bundle: ₹499/month (all premium features unlocked)
+//   - Complete bundle: ₹449/month (all premium features unlocked)
 
 import { supabase } from './supabaseClient';
 import { loadJSON, STORAGE_KEYS } from './storage';

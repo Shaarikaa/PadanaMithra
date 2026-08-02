@@ -4,9 +4,17 @@ import { useApp } from '@/lib/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { cn, calculateAge, MINIMUM_AGE } from '@/lib/utils';
 import { CLASSES, SUBJECT_INFOS, getChaptersForSubject, getTopicsForChapter } from '@/lib/curriculum';
 import { connectParent } from '@/lib/parentService';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap, FlaskConical, Dna, Sigma,
@@ -45,6 +53,7 @@ export function OnboardingPage() {
   const [parentError, setParentError] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [parentConnected, setParentConnected] = useState(false);
+  const [ageModalOpen, setAgeModalOpen] = useState(false);
 
   const currentStep = STEPS[stepIdx];
 
@@ -70,8 +79,17 @@ export function OnboardingPage() {
         return false;
       }
       const dob = new Date(data.dateOfBirth);
+      if (isNaN(dob.getTime())) {
+        setError('Please enter a valid date of birth.');
+        return false;
+      }
       if (dob > new Date()) {
-        setError('Date of birth cannot be in the future.');
+        setError('Please enter a valid date of birth.');
+        return false;
+      }
+      const age = calculateAge(data.dateOfBirth);
+      if (age === null || age < MINIMUM_AGE) {
+        setAgeModalOpen(true);
         return false;
       }
     }
@@ -263,6 +281,27 @@ export function OnboardingPage() {
           You can change all of this later from your profile settings.
         </p>
       </div>
+
+      <Dialog open={ageModalOpen} onOpenChange={setAgeModalOpen}>
+        <DialogContent className="max-w-sm text-center">
+          <DialogHeader>
+            <DialogTitle className="flex flex-col items-center gap-3 text-center">
+              <span className="text-4xl">🎓</span>
+              Age Requirement
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-center text-sm text-slate-600">
+              Padanamithra is designed for learners aged 10 and above.
+              <br />
+              Please enter a valid Date of Birth to continue.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="justify-center sm:justify-center">
+            <Button onClick={() => setAgeModalOpen(false)} className="bg-indigo-600 hover:bg-indigo-700">
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

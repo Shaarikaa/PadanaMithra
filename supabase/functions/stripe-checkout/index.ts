@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const INDIVIDUAL_PRICE = 9900; // ₹99.00 in paise
-const BUNDLE_PRICE = 49900; // ₹499.00 in paise
+const BUNDLE_PRICE = 44900; // ₹449.00 in paise
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -128,7 +128,7 @@ Deno.serve(async (req: Request) => {
     const stripe = await import("npm:stripe@14.21.0");
     const stripeClient = new stripe.default(stripeSecretKey);
 
-    // Create checkout for the full bundle (₹499)
+    // Create checkout for the full bundle (₹449)
     if (action === "create_checkout") {
       const origin = req.headers.get("origin") || "http://localhost:5173";
       const session = await stripeClient.checkout.sessions.create({
