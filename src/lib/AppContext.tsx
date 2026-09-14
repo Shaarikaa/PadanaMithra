@@ -119,8 +119,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const result = await verifySession(sessionToken);
         if (result.valid && result.user) {
           const restoredUser: User = { email: result.user.email, name: result.user.name };
+          // Save the user to localStorage before fetching the profile,
+          // so the x-user-id header is present for RLS policies.
+          saveJSON(STORAGE_KEYS.currentUser, restoredUser);
+
           const userId = emailToUserId(restoredUser.email);
-          // Fetch profile from backend, fall back to local
           let backendProfile = await fetchProfile(userId);
           if (!backendProfile) {
             const local = loadLocalProfile(userId);
@@ -131,7 +134,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
           setUser(restoredUser);
           setProfile(backendProfile);
-          saveJSON(STORAGE_KEYS.currentUser, restoredUser);
           if (backendProfile && backendProfile.onboardingCompleted) {
             setPage({ name: 'dashboard' });
           } else {
@@ -192,7 +194,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const authUser: User = { email: result.user.email, name: result.user.name };
     const userId = emailToUserId(authUser.email);
 
-    // Fetch existing profile from backend
+    // Save the session to localStorage BEFORE fetching the profile.
+    // fetchProfile uses the anon-key Supabase client, which reads the
+    // x-user-id header from localStorage to satisfy RLS policies.
+    // Without this, the profile query is blocked and the user is
+    // incorrectly sent to onboarding even though they already have one.
+    saveSession(authUser, result.sessionToken);
+
     let existingProfile = await fetchProfile(userId);
     if (!existingProfile) {
       // Try local fallback (migration from old localStorage)
@@ -205,7 +213,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setUser(authUser);
     setProfile(existingProfile);
-    saveSession(authUser, result.sessionToken);
 
     if (existingProfile && existingProfile.onboardingCompleted) {
       setPage({ name: 'dashboard' });

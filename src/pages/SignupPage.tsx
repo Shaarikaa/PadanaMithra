@@ -33,6 +33,9 @@ export function SignupPage() {
     const result = await signup(name.trim(), email.trim(), password);
     if (!result.ok) {
       setError(result.error ?? 'Sign up failed.');
+      if (result.accountExists) {
+        setTimeout(() => navigate({ name: 'login' }), 1500);
+      }
       setLoading(false);
     }
   };
