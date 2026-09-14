@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Brain, ArrowLeft, Zap, FlaskConical, Dna, Sigma, BookOpen, RefreshCw,
-  Layers, Eye, Lightbulb, BarChart3, Volume2, VolumeX, Pause, Play, Square,
+  Layers, Eye, Lightbulb, BarChart3, Volume2, Pause, Play, Square,
   RotateCcw, ChevronRight, ChevronLeft, CheckCircle2, XCircle, Sparkles,
   Calendar, TrendingUp, AlertCircle, Mic, MicOff,
   type LucideIcon,
@@ -916,23 +916,25 @@ function MemoryCardsView({
   }, [generateCards]);
 
   const handleResponse = (remembered: boolean) => {
-    if (!topicRecord || !cards[currentIndex]) return;
+    if (!cards[currentIndex]) return;
     audio.stop();
-    const result = remembered ? 'correct' : 'correct_with_hint';
-    recordProgress(userId, subject, topicRecord.id, 'memory_cards', result, hintsUsed);
-    if (remembered) {
-      updateMemoryTopic(topicRecord.id, {
-        correct_count: (topicRecord.correct_count ?? 0) + 1,
-        last_reviewed_at: new Date().toISOString(),
-      });
-    } else {
-      updateMemoryTopic(topicRecord.id, {
-        hint_count: (topicRecord.hint_count ?? 0) + hintsUsed,
-        correct_after_hint: (topicRecord.correct_after_hint ?? 0) + 1,
-        last_reviewed_at: new Date().toISOString(),
-      });
+    if (topicRecord) {
+      const result = remembered ? 'correct' : 'correct_with_hint';
+      recordProgress(userId, subject, topicRecord.id, 'memory_cards', result, hintsUsed);
+      if (remembered) {
+        updateMemoryTopic(topicRecord.id, {
+          correct_count: (topicRecord.correct_count ?? 0) + 1,
+          last_reviewed_at: new Date().toISOString(),
+        });
+      } else {
+        updateMemoryTopic(topicRecord.id, {
+          hint_count: (topicRecord.hint_count ?? 0) + hintsUsed,
+          correct_after_hint: (topicRecord.correct_after_hint ?? 0) + 1,
+          last_reviewed_at: new Date().toISOString(),
+        });
+      }
+      recordSession(userId, subject, classLabel, 'memory_cards', [cards[currentIndex].topic], remembered ? 1 : 0, 1, hintsUsed);
     }
-    recordSession(userId, subject, classLabel, 'memory_cards', [cards[currentIndex].topic], remembered ? 1 : 0, 1, hintsUsed);
     handleNextCard();
   };
 
