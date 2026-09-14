@@ -22,6 +22,7 @@ import { LearningPathPage } from '@/pages/LearningPathPage';
 import { TeachBackPage } from '@/pages/TeachBackPage';
 import { FocusTimerPage } from '@/pages/FocusTimerPage';
 import { TextbookHubPage } from '@/pages/TextbookHubPage';
+import { MemorySupportPage } from '@/pages/MemorySupportPage';
 import { ParentLoginPage } from '@/pages/ParentLoginPage';
 import { ParentDashboardPage } from '@/pages/ParentDashboardPage';
 import { FEATURES } from '@/lib/features';
@@ -44,6 +45,7 @@ const FEATURE_PAGES: Record<string, () => React.ReactElement | null> = {
   'teach-back': TeachBackPage,
   'focus-timer': FocusTimerPage,
   'textbook-hub': TextbookHubPage,
+  'memory-support': MemorySupportPage,
 };
 
 // Pages that require authentication

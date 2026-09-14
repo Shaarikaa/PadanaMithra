@@ -119,6 +119,14 @@ export const FEATURES: FeatureConfig[] = [
     accent: 'bg-amber-100 text-amber-600',
   },
   {
+    id: 'memory-support',
+    title: 'Memory Support',
+    description: 'Learn, remember and revise at your own pace.',
+    icon: Brain,
+    premium: false,
+    accent: 'bg-indigo-100 text-indigo-600',
+  },
+  {
     id: 'career',
     title: 'Career Guidance',
     description: 'Explore career paths based on your interests.',

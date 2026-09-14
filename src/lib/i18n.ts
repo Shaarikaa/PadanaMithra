@@ -42,6 +42,7 @@ const translations: Record<string, TranslationEntry> = {
   'nav.teachBack': { en: 'Teach Back', ml: 'ടീച്ച് ബാക്ക്' },
   'nav.mentoring': { en: 'Personal Mentor', ml: 'വ്യക്തിഗത മെന്റർ' },
   'nav.offline': { en: 'Offline Mode', ml: 'ഓഫ്ലൈൻ മോഡ്' },
+  'nav.memorySupport': { en: 'Memory Support', ml: 'മെമ്മറി സപ്പോർട്ട്' },
 
   // ---- Common ----
   'common.loading': { en: 'Loading...', ml: 'ലോഡ് ചെയ്യുന്നു...' },

@@ -90,7 +90,8 @@ export type FeatureId =
   | 'learning-path'
   | 'teach-back'
   | 'focus-timer'
-  | 'textbook-hub';
+  | 'textbook-hub'
+  | 'memory-support';
 
 // ---- Learning Intelligence Types ----
 
