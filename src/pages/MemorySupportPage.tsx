@@ -917,25 +917,36 @@ function MemoryCardsView({
 
   const handleResponse = (remembered: boolean) => {
     if (!cards[currentIndex]) return;
-    audio.stop();
-    if (topicRecord) {
-      const result = remembered ? 'correct' : 'correct_with_hint';
-      recordProgress(userId, subject, topicRecord.id, 'memory_cards', result, hintsUsed);
-      if (remembered) {
+    if (remembered) {
+      audio.stop();
+      if (topicRecord) {
+        recordProgress(userId, subject, topicRecord.id, 'memory_cards', 'correct', hintsUsed);
         updateMemoryTopic(topicRecord.id, {
           correct_count: (topicRecord.correct_count ?? 0) + 1,
           last_reviewed_at: new Date().toISOString(),
         });
-      } else {
+        recordSession(userId, subject, classLabel, 'memory_cards', [cards[currentIndex].topic], 1, 1, hintsUsed);
+      }
+      handleNextCard();
+      return;
+    }
+    if (!showHint) {
+      setShowHint(true);
+      setHintsUsed((h) => h + 1);
+    } else if (!showBack) {
+      setShowBack(true);
+      if (topicRecord) {
+        recordProgress(userId, subject, topicRecord.id, 'memory_cards', 'correct_with_hint', hintsUsed);
         updateMemoryTopic(topicRecord.id, {
           hint_count: (topicRecord.hint_count ?? 0) + hintsUsed,
           correct_after_hint: (topicRecord.correct_after_hint ?? 0) + 1,
           last_reviewed_at: new Date().toISOString(),
         });
+        recordSession(userId, subject, classLabel, 'memory_cards', [cards[currentIndex].topic], 0, 1, hintsUsed);
       }
-      recordSession(userId, subject, classLabel, 'memory_cards', [cards[currentIndex].topic], remembered ? 1 : 0, 1, hintsUsed);
+    } else {
+      handleNextCard();
     }
-    handleNextCard();
   };
 
   const handleNextCard = () => {
@@ -1500,11 +1511,21 @@ function RecallPracticeView({
                 That's okay. Let's try with a hint.
               </p>
             </div>
+            <div className="mt-3 flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => { setResultState('none'); setUserAnswer(''); }}>
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                Try Again
+              </Button>
+              <Button size="sm" onClick={handleNext}>
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                Next Question
+              </Button>
+            </div>
           </div>
         )}
       </Card>
 
-      {resultState !== 'correct' && !showAnswer && (
+      {resultState === 'none' && !showAnswer && (
         <Button
           className="w-full bg-amber-500 hover:bg-amber-600"
           onClick={handleHelpMeRemember}
@@ -1515,7 +1536,20 @@ function RecallPracticeView({
         </Button>
       )}
 
-      {(resultState === 'correct' || showAnswer) && (
+      {resultState === 'correct' && !showAnswer && (
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={handleNext}>
+            <Sparkles className="mr-1.5 h-4 w-4" />
+            Next Question
+          </Button>
+          <Button variant="outline" onClick={handlePrevious} disabled={historyIndex <= 0}>
+            <ChevronLeft className="mr-1.5 h-3.5 w-3.5" />
+            Previous
+          </Button>
+        </div>
+      )}
+
+      {showAnswer && (
         <div className="flex gap-2">
           <Button className="flex-1" onClick={handleNext}>
             <Sparkles className="mr-1.5 h-4 w-4" />
