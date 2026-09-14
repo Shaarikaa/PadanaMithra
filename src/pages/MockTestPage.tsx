@@ -11,6 +11,7 @@ import { useApp } from '@/lib/AppContext';
 import { generateMockQuestions } from '@/lib/mockData';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
 import { recordAnswer, detectMisconception, explainWrongAnswer, generateSimilarQuestion, type MisconceptionResult, type WrongAnswerExplanation } from '@/lib/learningEngine';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 import type { MockQuestion } from '@/lib/types';
 
 const DURATION = 600;
@@ -33,11 +34,19 @@ type Phase = 'intro' | 'active' | 'result';
 
 export function MockTestPage() {
   const { profile } = useApp();
+  const { subjects } = useSelectedSubjects();
   const [phase, setPhase] = useState<Phase>('intro');
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [timeLeft, setTimeLeft] = useState(DURATION);
-  const [questions] = useState<MockQuestion[]>(() => generateMockQuestions());
+  const [questions] = useState<MockQuestion[]>(() => {
+    const all = generateMockQuestions();
+    const filtered = all.filter((q) => {
+      const meta = QUESTION_META[q.id];
+      return meta && subjects.includes(meta.subject);
+    });
+    return filtered.length > 0 ? filtered : all;
+  });
 
   useEffect(() => {
     if (phase !== 'active') return;
@@ -117,7 +126,7 @@ export function MockTestPage() {
             </div>
             <h2 className="text-xl font-bold text-slate-900">Ready to test yourself?</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
-              {questions.length} multiple-choice questions covering Physics, Chemistry, Maths and Biology.
+              {questions.length} multiple-choice questions covering {subjects.join(', ')}.
               The timer starts as soon as you begin.
             </p>
             <div className="mt-6 grid grid-cols-3 gap-3">

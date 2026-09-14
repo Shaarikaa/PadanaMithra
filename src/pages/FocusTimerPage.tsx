@@ -9,6 +9,8 @@ import { useApp } from '@/lib/AppContext';
 import { loadJSON, saveJSON } from '@/lib/storage';
 import { supabase } from '@/lib/supabaseClient';
 import { setFocusMode } from '@/hooks/use-toast';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
+import { SUBJECT_INFOS } from '@/lib/curriculum';
 
 type TimerState = 'idle' | 'running' | 'paused' | 'break' | 'completed';
 type SessionStatus = 'completed' | 'paused' | 'cancelled';
@@ -36,12 +38,7 @@ const PRESETS = [
   { label: 'Marathon', focus: 90, break: 20, icon: Target },
 ];
 
-const SUBJECTS = [
-  { name: 'Physics', icon: Zap, color: 'bg-indigo-100 text-indigo-600' },
-  { name: 'Chemistry', icon: FlaskConical, color: 'bg-emerald-100 text-emerald-600' },
-  { name: 'Biology', icon: Dna, color: 'bg-rose-100 text-rose-600' },
-  { name: 'Mathematics', icon: Sigma, color: 'bg-amber-100 text-amber-600' },
-];
+
 
 function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
@@ -117,9 +114,10 @@ async function saveSessionDB(params: {
 
 export function FocusTimerPage() {
   const { profile } = useApp();
+  const { subjects, defaultSubject } = useSelectedSubjects();
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [selectedPreset, setSelectedPreset] = useState(0);
-  const [selectedSubject, setSelectedSubject] = useState<string>(profile?.selectedSubjects?.[0] || 'Physics');
+  const [selectedSubject, setSelectedSubject] = useState<string>(defaultSubject);
   const [secondsLeft, setSecondsLeft] = useState(PRESETS[0].focus * 60);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
@@ -306,8 +304,12 @@ export function FocusTimerPage() {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const currentSubject = SUBJECTS.find((s) => s.name === selectedSubject) || SUBJECTS[0];
-  const SubjectIcon = currentSubject.icon;
+  const currentSubjectInfo = SUBJECT_INFOS.find((s) => s.id === selectedSubject);
+  const SubjectIcon = currentSubjectInfo?.icon === 'FlaskConical' ? FlaskConical
+    : currentSubjectInfo?.icon === 'Dna' ? Dna
+    : currentSubjectInfo?.icon === 'Sigma' ? Sigma
+    : Zap;
+  const currentSubjectColor = currentSubjectInfo?.accent ?? 'bg-indigo-100 text-indigo-600';
   const isFocusActive = timerState === 'running';
 
   // ---- Fullscreen distraction-free mode ----
@@ -323,7 +325,7 @@ export function FocusTimerPage() {
         </button>
 
         <div className="mb-8 flex items-center gap-3">
-          <span className={cn('flex h-12 w-12 items-center justify-center rounded-xl', currentSubject.color)}>
+          <span className={cn('flex h-12 w-12 items-center justify-center rounded-xl', currentSubjectColor)}>
             <SubjectIcon className="h-6 w-6" />
           </span>
           <div>
@@ -632,26 +634,27 @@ export function FocusTimerPage() {
         <Card className="border-slate-200 p-5 shadow-sm">
           <h3 className="mb-4 text-sm font-semibold text-slate-900">What are you studying?</h3>
           <div className="grid gap-3 sm:grid-cols-4">
-            {SUBJECTS.map((subject) => {
-              const Icon = subject.icon;
+            {subjects.map((subjectName) => {
+              const info = SUBJECT_INFOS.find((s) => s.id === subjectName);
+              const Icon = info?.icon === 'Zap' ? Zap : info?.icon === 'FlaskConical' ? FlaskConical : info?.icon === 'Dna' ? Dna : Sigma;
               return (
                 <button
-                  key={subject.name}
-                  onClick={() => setSelectedSubject(subject.name)}
+                  key={subjectName}
+                  onClick={() => setSelectedSubject(subjectName)}
                   disabled={timerState === 'running' || timerState === 'break'}
                   className={cn(
                     'flex items-center gap-2 rounded-xl border-2 p-4 transition',
-                    selectedSubject === subject.name
+                    selectedSubject === subjectName
                       ? 'border-indigo-600 bg-indigo-50'
                       : 'border-slate-200 bg-white hover:border-indigo-200',
                     (timerState === 'running' || timerState === 'break') && 'cursor-not-allowed opacity-50',
                   )}
                 >
-                  <span className={cn('flex h-8 w-8 items-center justify-center rounded-lg', subject.color)}>
+                  <span className={cn('flex h-8 w-8 items-center justify-center rounded-lg', info?.accent ?? 'bg-slate-100 text-slate-600')}>
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className={cn('text-sm font-medium', selectedSubject === subject.name ? 'text-indigo-700' : 'text-slate-700')}>
-                    {subject.name}
+                  <span className={cn('text-sm font-medium', selectedSubject === subjectName ? 'text-indigo-700' : 'text-slate-700')}>
+                    {subjectName}
                   </span>
                 </button>
               );

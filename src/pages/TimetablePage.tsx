@@ -17,13 +17,14 @@ import {
 import { useApp } from '@/lib/AppContext';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
 import type { TimetableEntry } from '@/lib/types';
-import { SUBJECTS } from '@/lib/mockData';
 import { SUBJECT_INFOS } from '@/lib/curriculum';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function TimetablePage() {
   const { profile } = useApp();
+  const { subjects } = useSelectedSubjects();
   const [entries, setEntries] = useState<TimetableEntry[]>(() =>
     loadJSON<TimetableEntry[]>(STORAGE_KEYS.timetable, []),
   );
@@ -194,7 +195,7 @@ export function TimetablePage() {
                 onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
               />
               <div className="flex flex-wrap gap-1.5 pt-1">
-                {SUBJECTS.slice(0, 4).map((s) => (
+                {subjects.map((s) => (
                   <button
                     key={s}
                     onClick={() => setForm((f) => ({ ...f, subject: s }))}

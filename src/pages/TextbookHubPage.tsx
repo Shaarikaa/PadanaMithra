@@ -10,11 +10,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/lib/AppContext';
 import { setPendingTutorContext } from '@/lib/AppContext';
-import { TEXTBOOKS, SUBJECTS, MEDIUMS, CLASSES, type Textbook, type Subject, type Medium, type ClassName } from '@/lib/textbooks';
+import { TEXTBOOKS, SUBJECTS as ALL_TEXTBOOK_SUBJECTS, MEDIUMS, CLASSES, type Textbook, type Subject, type Medium, type ClassName } from '@/lib/textbooks';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 
 export function TextbookHubPage() {
   const { profile, language, setLanguage, navigate } = useApp();
+  const { subjects: selectedSubjects } = useSelectedSubjects();
+
+  const textbookSubjects = useMemo<Subject[]>(() => {
+    return ALL_TEXTBOOK_SUBJECTS.filter((s) => selectedSubjects.includes(s));
+  }, [selectedSubjects]);
 
   // Auto-prioritize from profile
   const profileMedium: Medium | 'all' = profile?.preferredLanguage === 'ml' ? 'Malayalam' : 'all';
@@ -170,7 +176,7 @@ export function TextbookHubPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{language === 'ml' ? 'എല്ലാം' : 'All Subjects'}</SelectItem>
-                {SUBJECTS.map((s) => (
+                {textbookSubjects.map((s) => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
               </SelectContent>

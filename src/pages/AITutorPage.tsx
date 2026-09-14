@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/lib/types';
 import { useApp, consumePendingTutorContext, type TutorContextPayload } from '@/lib/AppContext';
 import { getChaptersForSubject } from '@/lib/curriculum';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
 import { LANGUAGES, getVoiceLanguageTag, isMalayalamText, type Language } from '@/lib/i18n';
 import { translateReplyToMalayalam } from '@/lib/mockData';
@@ -57,6 +58,7 @@ interface GuidedMessage extends ChatMessage {
 
 export function AITutorPage() {
   const { profile, language, setLanguage } = useApp();
+  const { classId, subjects } = useSelectedSubjects();
   const tutorContext = profile ? {
     name: profile.fullName,
     classLevel: profile.classLevel,
@@ -440,7 +442,7 @@ export function AITutorPage() {
     setSpeakingId(null);
   };
 
-  const profileChapters = profile?.currentSubject ? getChaptersForSubject('class-9', profile.currentSubject) : [];
+  const profileChapters = profile?.currentSubject ? getChaptersForSubject(classId, profile.currentSubject) : [];
   const allChapters = profileChapters.length > 0 ? profileChapters.map(c => c.name) : ['Motion', 'Laws of Motion', 'Chemical Reactions', 'Trigonometry', 'Cell', 'Life Processes'];
 
   return (

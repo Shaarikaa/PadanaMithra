@@ -6,11 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// To Do: Replace with real Gemini API Key here — analyze Textbook + PYQ PDFs via Gemini.
-import { generateShortNotes, CHAPTERS, SUBJECTS } from '@/lib/mockData';
+import { generateShortNotes, CHAPTERS } from '@/lib/mockData';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 
 export function ShortNotesPage() {
-  const [subject, setSubject] = useState<string>('Physics');
+  const { subjects, defaultSubject, classLabel } = useSelectedSubjects();
+  const [subject, setSubject] = useState<string>(defaultSubject);
   const [chapter, setChapter] = useState<string>('');
   const [customChapter, setCustomChapter] = useState('');
   const [notes, setNotes] = useState<string[] | null>(null);
@@ -63,7 +64,7 @@ export function ShortNotesPage() {
               <Select value={subject} onValueChange={(v) => { setSubject(v); setChapter(''); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {SUBJECTS.map((s) => (
+                  {subjects.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>

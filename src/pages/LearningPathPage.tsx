@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useApp } from '@/lib/AppContext';
 import { SUBJECT_INFOS, getChaptersForSubject } from '@/lib/curriculum';
 import { computeLearningPath, computeLearningDNA, computeNextBestStep, getConceptGaps } from '@/lib/learningEngine';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 
 const SUBJECT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap, FlaskConical, Dna, Sigma,
@@ -23,6 +24,7 @@ const STATUS_CONFIG = {
 
 export function LearningPathPage() {
   const { profile, navigate } = useApp();
+  const { classId } = useSelectedSubjects();
 
   const path = useMemo(() => computeLearningPath(profile), [profile]);
   const dna = useMemo(() => computeLearningDNA(profile), [profile]);
@@ -33,7 +35,7 @@ export function LearningPathPage() {
 
   const subjectInfo = SUBJECT_INFOS.find((s) => s.id === profile.currentSubject);
   const SubjIcon = subjectInfo ? SUBJECT_ICONS[subjectInfo.icon] : Zap;
-  const chapters = getChaptersForSubject('class-9', profile.currentSubject);
+  const chapters = getChaptersForSubject(classId, profile.currentSubject);
 
   return (
     <AppShell title="My Learning Path" subtitle="Your personalized learning journey based on real activity.">

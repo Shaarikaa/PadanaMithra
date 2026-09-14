@@ -6,12 +6,13 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-// To Do: Replace with real Gemini API Key here — analyze the PYQ PDF via Gemini.
-import { predictQuestions, SUBJECTS, CHAPTERS } from '@/lib/mockData';
+import { predictQuestions, CHAPTERS } from '@/lib/mockData';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 import type { PredictedQuestion } from '@/lib/types';
 
 export function PYQPredictorPage() {
-  const [subject, setSubject] = useState('Physics');
+  const { subjects, defaultSubject } = useSelectedSubjects();
+  const [subject, setSubject] = useState(defaultSubject);
   const [chapter, setChapter] = useState('');
   const [questions, setQuestions] = useState<PredictedQuestion[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +42,7 @@ export function PYQPredictorPage() {
               <Select value={subject} onValueChange={(v) => { setSubject(v); setChapter(''); setQuestions(null); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {SUBJECTS.map((s) => (
+                  {subjects.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>

@@ -10,22 +10,24 @@ import { useApp } from '@/lib/AppContext';
 import { SUBJECT_INFOS, getChaptersForSubject, getTopicsForChapter } from '@/lib/curriculum';
 import { evaluateTeachBack, saveTeachBackSession, getTeachBackSessions } from '@/lib/learningEngine';
 import { KNOWLEDGE_BASE } from '@/lib/mockData';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 import type { TeachBackEvaluation } from '@/lib/types';
 
 type Phase = 'select' | 'explain' | 'result';
 
 export function TeachBackPage() {
   const { profile, navigate } = useApp();
+  const { classId, defaultSubject } = useSelectedSubjects();
   const [phase, setPhase] = useState<Phase>('select');
-  const [selectedSubject, setSelectedSubject] = useState(profile?.currentSubject ?? '');
+  const [selectedSubject, setSelectedSubject] = useState(defaultSubject);
   const [selectedChapter, setSelectedChapter] = useState(profile?.currentChapter ?? '');
   const [selectedTopic, setSelectedTopic] = useState('');
   const [response, setResponse] = useState('');
   const [evaluation, setEvaluation] = useState<TeachBackEvaluation | null>(null);
   const [sessions] = useState(() => getTeachBackSessions());
 
-  const chapters = useMemo(() => getChaptersForSubject('class-9', selectedSubject), [selectedSubject]);
-  const topics = useMemo(() => getTopicsForChapter('class-9', selectedSubject, selectedChapter), [selectedSubject, selectedChapter]);
+  const chapters = useMemo(() => getChaptersForSubject(classId, selectedSubject), [classId, selectedSubject]);
+  const topics = useMemo(() => getTopicsForChapter(classId, selectedSubject, selectedChapter), [classId, selectedSubject, selectedChapter]);
   const knowledgeText = KNOWLEDGE_BASE[selectedChapter] ?? '';
 
   const handleStartExplain = () => {
