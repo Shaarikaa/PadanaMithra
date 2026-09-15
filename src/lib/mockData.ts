@@ -167,6 +167,7 @@ export function generateShortNotes(chapter: string): string[] {
 
 export function generateMockQuestions(): import("./types").MockQuestion[] {
   return [
+    // Physics (10 questions)
     {
       id: "q1",
       question: "The SI unit of acceleration is:",
@@ -189,6 +190,56 @@ export function generateMockQuestions(): import("./types").MockQuestion[] {
       explanation: "Velocity has both magnitude and direction, making it a vector. Speed is a scalar.",
     },
     {
+      id: "q11",
+      question: "The SI unit of force is:",
+      options: ["Joule", "Watt", "Newton", "Pascal"],
+      answerIndex: 2,
+      explanation: "The newton (N) is the SI unit of force, defined as 1 kg times m/s squared.",
+    },
+    {
+      id: "q12",
+      question: "According to Ohm's Law, V = ?",
+      options: ["I/R", "IR", "I + R", "I - R"],
+      answerIndex: 1,
+      explanation: "Ohm's Law states V = IR, where V is voltage, I is current, and R is resistance.",
+    },
+    {
+      id: "q13",
+      question: "The law of conservation of energy states that:",
+      options: ["Energy can be created", "Energy can be destroyed", "Energy can only be transformed", "Energy decreases over time"],
+      answerIndex: 2,
+      explanation: "Energy can neither be created nor destroyed, only transformed from one form to another.",
+    },
+    {
+      id: "q14",
+      question: "Snell's Law describes the relationship between:",
+      options: ["Current and voltage", "Angles of incidence and refraction", "Force and mass", "Speed and distance"],
+      answerIndex: 1,
+      explanation: "Snell's Law: n1 sin theta1 = n2 sin theta2, relating the angles of incidence and refraction.",
+    },
+    {
+      id: "q15",
+      question: "Sound travels as which type of wave?",
+      options: ["Transverse wave", "Longitudinal wave", "Electromagnetic wave", "Standing wave"],
+      answerIndex: 1,
+      explanation: "Sound propagates as longitudinal waves — compressions and rarefactions in the medium.",
+    },
+    {
+      id: "q16",
+      question: "The speed of sound in air at 20 degrees C is approximately:",
+      options: ["343 m/s", "300 m/s", "1500 m/s", "100 m/s"],
+      answerIndex: 0,
+      explanation: "The speed of sound in air at 20 degrees C is about 343 m/s.",
+    },
+    {
+      id: "q17",
+      question: "Which lens converges light rays?",
+      options: ["Concave lens", "Convex lens", "Cylindrical lens", "Plane lens"],
+      answerIndex: 1,
+      explanation: "A convex lens converges light rays to a focal point, while a concave lens diverges them.",
+    },
+    // Chemistry (10 questions)
+    {
       id: "q4",
       question: "The pH of a neutral solution at 25 degrees C is:",
       options: ["0", "7", "14", "1"],
@@ -210,6 +261,56 @@ export function generateMockQuestions(): import("./types").MockQuestion[] {
       explanation: "In a neutral atom, positive protons balance negative electrons, so their counts are equal.",
     },
     {
+      id: "q18",
+      question: "Which of the following is NOT a sign of a chemical reaction?",
+      options: ["Color change", "Gas release", "Temperature change", "Change in shape"],
+      answerIndex: 3,
+      explanation: "A change in shape is a physical change, not a chemical reaction. Color change, gas release, and temperature change indicate chemical reactions.",
+    },
+    {
+      id: "q19",
+      question: "A neutralization reaction produces:",
+      options: ["Acid and base", "Salt and water", "Salt and gas", "Water and gas"],
+      answerIndex: 1,
+      explanation: "Neutralization: acid + base produces salt and water (e.g., HCl + NaOH gives NaCl + H2O).",
+    },
+    {
+      id: "q20",
+      question: "The law of conservation of mass states that:",
+      options: ["Mass can be created", "Mass can be destroyed", "Mass of reactants equals mass of products", "Mass increases in reactions"],
+      answerIndex: 2,
+      explanation: "Mass is neither created nor destroyed in a chemical reaction; total mass of reactants equals total mass of products.",
+    },
+    {
+      id: "q21",
+      question: "Isotopes of an element have the same number of:",
+      options: ["Neutrons", "Protons", "Mass number", "Nucleons"],
+      answerIndex: 1,
+      explanation: "Isotopes have the same number of protons (same element) but different numbers of neutrons, giving different mass numbers.",
+    },
+    {
+      id: "q22",
+      question: "Which subatomic particle has no charge?",
+      options: ["Proton", "Electron", "Neutron", "Positron"],
+      answerIndex: 2,
+      explanation: "Neutrons are electrically neutral — they have no charge. Protons are positive, electrons are negative.",
+    },
+    {
+      id: "q23",
+      question: "The modern periodic table arranges elements by:",
+      options: ["Atomic mass", "Atomic number", "Density", "Alphabetical order"],
+      answerIndex: 1,
+      explanation: "Moseley corrected Mendeleev's table to arrange elements by atomic number (number of protons).",
+    },
+    {
+      id: "q24",
+      question: "A strong acid in water will have a pH closest to:",
+      options: ["0", "7", "10", "14"],
+      answerIndex: 0,
+      explanation: "Strong acids fully ionize in water, producing high H+ concentration and very low pH (close to 0).",
+    },
+    // Mathematics (10 questions)
+    {
       id: "q7",
       question: "The value of sin 30 degrees is:",
       options: ["0", "1/2", "1", "root 3 / 2"],
@@ -229,6 +330,63 @@ export function generateMockQuestions(): import("./types").MockQuestion[] {
       explanation: "This is the Pythagorean theorem: c squared = a squared + b squared.",
     },
     {
+      id: "q25",
+      question: "The Fundamental Theorem of Arithmetic states that every composite number is:",
+      options: ["A sum of primes", "A unique product of primes", "A difference of primes", "A power of a prime"],
+      answerIndex: 1,
+      explanation: "Every composite number can be expressed as a unique product of prime factors (order aside).",
+    },
+    {
+      id: "q26",
+      question: "According to the Remainder Theorem, dividing p(x) by (x - a) gives remainder:",
+      options: ["p(0)", "p(a)", "p(1)", "a"],
+      answerIndex: 1,
+      explanation: "The Remainder Theorem states that when p(x) is divided by (x - a), the remainder equals p(a).",
+    },
+    {
+      id: "q27",
+      question: "The value of cos 0 degrees is:",
+      options: ["0", "1/2", "1", "root 3 / 2"],
+      answerIndex: 2,
+      explanation: "cos 0 degrees = 1 — the cosine of zero degrees is one.",
+    },
+    {
+      id: "q28",
+      question: "A polynomial of degree 2 is called a:",
+      options: ["Linear polynomial", "Quadratic polynomial", "Cubic polynomial", "Constant polynomial"],
+      answerIndex: 1,
+      explanation: "A polynomial with degree 2 (highest power is x squared) is called a quadratic polynomial.",
+    },
+    {
+      id: "q29",
+      question: "The sum of all angles in a triangle is:",
+      options: ["90 degrees", "180 degrees", "270 degrees", "360 degrees"],
+      answerIndex: 1,
+      explanation: "The angle sum property of a triangle states that the sum of all three interior angles is 180 degrees.",
+    },
+    {
+      id: "q30",
+      question: "Euclid's division lemma states that a = bq + r where:",
+      options: ["0 <= r < b", "0 < r <= b", "r = b", "r > b"],
+      answerIndex: 0,
+      explanation: "Euclid's division lemma: for any integers a and b, a = bq + r where 0 <= r < b.",
+    },
+    {
+      id: "q31",
+      question: "The HCF of two numbers is found using:",
+      options: ["Addition", "Prime factorization", "Subtraction", "Division only"],
+      answerIndex: 1,
+      explanation: "The HCF (Highest Common Factor) is found using prime factorization — the product of common prime factors with the lowest power.",
+    },
+    {
+      id: "q32",
+      question: "If two lines have the same slope and different y-intercepts, they are:",
+      options: ["Intersecting", "Parallel", "Coincident", "Perpendicular"],
+      answerIndex: 1,
+      explanation: "Lines with the same slope but different y-intercepts are parallel — they never intersect.",
+    },
+    // Biology (10 questions)
+    {
       id: "q9",
       question: "The powerhouse of the cell is the:",
       options: ["Nucleus", "Ribosome", "Mitochondria", "Vacuole"],
@@ -242,22 +400,95 @@ export function generateMockQuestions(): import("./types").MockQuestion[] {
       answerIndex: 1,
       explanation: "Chloroplasts contain chlorophyll, which captures light energy to drive photosynthesis.",
     },
+    {
+      id: "q33",
+      question: "The basic structural and functional unit of life is the:",
+      options: ["Tissue", "Organ", "Cell", "Organ system"],
+      answerIndex: 2,
+      explanation: "The cell is the basic structural and functional unit of all living organisms.",
+    },
+    {
+      id: "q34",
+      question: "Which organelle controls the activities of the cell?",
+      options: ["Cytoplasm", "Nucleus", "Ribosome", "Vacuole"],
+      answerIndex: 1,
+      explanation: "The nucleus contains DNA and controls all cellular activities, including growth and reproduction.",
+    },
+    {
+      id: "q35",
+      question: "A group of similar cells performing a specific function is called a:",
+      options: ["Organ", "Tissue", "System", "Organism"],
+      answerIndex: 1,
+      explanation: "A tissue is a group of similar cells that work together to perform a specific function.",
+    },
+    {
+      id: "q36",
+      question: "Respiration in living cells produces which energy molecule?",
+      options: ["DNA", "Protein", "ATP", "Glucose"],
+      answerIndex: 2,
+      explanation: "Respiration breaks down glucose to produce ATP, the energy currency of cells.",
+    },
+    {
+      id: "q37",
+      question: "Which plant tissue transports water?",
+      options: ["Phloem", "Xylem", "Parenchyma", "Collenchyma"],
+      answerIndex: 1,
+      explanation: "Xylem transports water and minerals from roots to leaves; phloem transports food.",
+    },
+    {
+      id: "q38",
+      question: "Mendel's Law of Segregation states that:",
+      options: ["Traits blend together", "Alleles separate during gamete formation", "Traits are acquired", "All traits are dominant"],
+      answerIndex: 1,
+      explanation: "The Law of Segregation states that allele pairs separate during gamete formation, and each gamete carries one allele.",
+    },
+    {
+      id: "q39",
+      question: "Which type of reproduction creates genetically identical offspring?",
+      options: ["Sexual reproduction", "Asexual reproduction", "Cross-pollination", "Fertilization"],
+      answerIndex: 1,
+      explanation: "Asexual reproduction (binary fission, budding) produces identical offspring because only one parent is involved.",
+    },
+    {
+      id: "q40",
+      question: "Prokaryotic cells differ from eukaryotic cells because prokaryotic cells lack a:",
+      options: ["Cell membrane", "Nucleus", "Cytoplasm", "DNA"],
+      answerIndex: 1,
+      explanation: "Prokaryotic cells (like bacteria) lack a true nucleus; their DNA is free in the cytoplasm. Eukaryotic cells have a nucleus.",
+    },
   ];
 }
 
 export const FLASHCARDS: import("./types").Flashcard[] = [
+  // Physics (7 cards)
   { id: "f1", subject: "Physics", front: "State Newton's First Law of Motion.", back: "An object remains at rest or in uniform motion unless acted upon by an external force. (Law of Inertia)" },
   { id: "f2", subject: "Physics", front: "What is the formula for kinetic energy?", back: "KE = 1/2 m v squared, where m is mass and v is velocity." },
   { id: "f3", subject: "Physics", front: "Define Ohm's Law.", back: "V = IR — voltage equals current multiplied by resistance, when temperature is constant." },
+  { id: "f11", subject: "Physics", front: "What does Snell's Law describe?", back: "The relationship between angles of incidence and refraction: n1 sin theta1 = n2 sin theta2." },
+  { id: "f12", subject: "Physics", front: "Define uniform motion.", back: "Motion in which an object covers equal distances in equal intervals of time." },
+  { id: "f13", subject: "Physics", front: "What is the SI unit of force?", back: "The newton (N) — 1 N = 1 kg times m/s squared." },
+  { id: "f14", subject: "Physics", front: "State the law of conservation of energy.", back: "Energy can neither be created nor destroyed, only transformed from one form to another." },
+  // Chemistry (6 cards)
   { id: "f4", subject: "Chemistry", front: "What is the pH of a neutral solution?", back: "pH = 7 at 25 degrees C, indicating equal H+ and OH- concentrations." },
+  { id: "f15", subject: "Chemistry", front: "What is an atom?", back: "The smallest unit of an element that retains its chemical properties; made of protons, neutrons, and electrons." },
+  { id: "f16", subject: "Chemistry", front: "Define a chemical reaction.", back: "A process where reactants rearrange atoms to form new products with different properties." },
+  { id: "f17", subject: "Chemistry", front: "What happens in a neutralization reaction?", back: "An acid reacts with a base to produce salt and water (e.g., HCl + NaOH gives NaCl + H2O)." },
+  { id: "f18", subject: "Chemistry", front: "State the law of conservation of mass.", back: "Mass is neither created nor destroyed in a chemical reaction; the total mass of reactants equals the total mass of products." },
+  { id: "f19", subject: "Chemistry", front: "What are isotopes?", back: "Atoms of the same element with the same number of protons but different numbers of neutrons." },
+  // Mathematics (6 cards)
   { id: "f5", subject: "Mathematics", front: "State the Fundamental Theorem of Arithmetic.", back: "Every composite number can be expressed as a unique product of prime factors (order aside)." },
   { id: "f6", subject: "Mathematics", front: "What is the Remainder Theorem?", back: "When p(x) is divided by (x - a), the remainder equals p(a)." },
   { id: "f7", subject: "Mathematics", front: "What is the value of sin squared theta + cos squared theta?", back: "It equals 1 — the fundamental Pythagorean trigonometric identity." },
+  { id: "f20", subject: "Mathematics", front: "State the Pythagorean theorem.", back: "In a right triangle, the square of the hypotenuse equals the sum of the squares of the other two sides (c squared = a squared + b squared)." },
+  { id: "f21", subject: "Mathematics", front: "What is a polynomial?", back: "An algebraic expression with variables raised to whole-number powers, combined using addition, subtraction, and multiplication." },
+  { id: "f22", subject: "Mathematics", front: "Define HCF and LCM.", back: "HCF is the highest common factor; LCM is the lowest common multiple. Both are found using prime factorization." },
+  // Biology (6 cards)
   { id: "f8", subject: "Biology", front: "Name the powerhouse of the cell.", back: "Mitochondria — they produce ATP via cellular respiration." },
   { id: "f9", subject: "Biology", front: "What is photosynthesis in one line?", back: "6CO2 + 6H2O, using light and chlorophyll, produces C6H12O6 + 6O2." },
   { id: "f10", subject: "Biology", front: "What are Mendel's laws about?", back: "Inheritance of traits — the Law of Segregation and the Law of Independent Assortment." },
-  { id: "f11", subject: "Physics", front: "What does Snell's Law describe?", back: "The relationship between angles of incidence and refraction: n1 sin theta1 = n2 sin theta2." },
-  { id: "f12", subject: "Physics", front: "Define uniform motion.", back: "Motion in which an object covers equal distances in equal intervals of time." },
+  { id: "f23", subject: "Biology", front: "What is the basic unit of life?", back: "The cell — it is the smallest structural and functional unit of all living organisms." },
+  { id: "f24", subject: "Biology", front: "What is a tissue?", back: "A group of similar cells performing a specific function, such as muscle tissue or xylem in plants." },
+  { id: "f25", subject: "Biology", front: "Define respiration in one line.", back: "The biochemical process that releases energy from food, typically using oxygen to break down glucose." },
 ];
 
 export function predictQuestions(subject: string, chapter: string): import("./types").PredictedQuestion[] {

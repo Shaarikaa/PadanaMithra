@@ -18,16 +18,50 @@ const DURATION = 600;
 
 // Metadata map: question ID -> { subject, chapter, topic }
 const QUESTION_META: Record<string, { subject: string; chapter: string; topic: string }> = {
+  // Physics
   q1: { subject: 'Physics', chapter: 'Motion', topic: 'Acceleration' },
   q2: { subject: 'Physics', chapter: 'Laws of Motion', topic: "Second Law (F=ma)" },
   q3: { subject: 'Physics', chapter: 'Motion', topic: 'Speed & Velocity' },
+  q11: { subject: 'Physics', chapter: 'Laws of Motion', topic: 'Units of Force' },
+  q12: { subject: 'Physics', chapter: 'Electricity', topic: "Ohm's Law" },
+  q13: { subject: 'Physics', chapter: 'Work & Energy', topic: 'Conservation of Energy' },
+  q14: { subject: 'Physics', chapter: 'Light', topic: "Snell's Law" },
+  q15: { subject: 'Physics', chapter: 'Sound', topic: 'Wave Types' },
+  q16: { subject: 'Physics', chapter: 'Sound', topic: 'Speed of Sound' },
+  q17: { subject: 'Physics', chapter: 'Light', topic: 'Lenses' },
+  // Chemistry
   q4: { subject: 'Chemistry', chapter: 'Acids & Bases', topic: 'pH Scale' },
   q5: { subject: 'Chemistry', chapter: 'Chemical Reactions', topic: 'Types of Reactions' },
   q6: { subject: 'Chemistry', chapter: 'Atoms & Molecules', topic: 'Atomic Structure' },
+  q18: { subject: 'Chemistry', chapter: 'Chemical Reactions', topic: 'Signs of Reactions' },
+  q19: { subject: 'Chemistry', chapter: 'Acids & Bases', topic: 'Neutralization' },
+  q20: { subject: 'Chemistry', chapter: 'Chemical Reactions', topic: 'Conservation of Mass' },
+  q21: { subject: 'Chemistry', chapter: 'Atoms & Molecules', topic: 'Isotopes' },
+  q22: { subject: 'Chemistry', chapter: 'Atoms & Molecules', topic: 'Subatomic Particles' },
+  q23: { subject: 'Chemistry', chapter: 'Periodic Table', topic: 'Modern Periodic Law' },
+  q24: { subject: 'Chemistry', chapter: 'Acids & Bases', topic: 'Strong Acids' },
+  // Mathematics
   q7: { subject: 'Mathematics', chapter: 'Trigonometry', topic: 'Trigonometric Ratios' },
   q8: { subject: 'Mathematics', chapter: 'Triangles', topic: 'Pythagoras Theorem' },
+  q25: { subject: 'Mathematics', chapter: 'Real Numbers', topic: 'Fundamental Theorem' },
+  q26: { subject: 'Mathematics', chapter: 'Polynomials', topic: 'Remainder Theorem' },
+  q27: { subject: 'Mathematics', chapter: 'Trigonometry', topic: 'Standard Values' },
+  q28: { subject: 'Mathematics', chapter: 'Polynomials', topic: 'Types of Polynomials' },
+  q29: { subject: 'Mathematics', chapter: 'Triangles', topic: 'Angle Sum Property' },
+  q30: { subject: 'Mathematics', chapter: 'Real Numbers', topic: "Euclid's Lemma" },
+  q31: { subject: 'Mathematics', chapter: 'Real Numbers', topic: 'HCF' },
+  q32: { subject: 'Mathematics', chapter: 'Linear Equations', topic: 'Parallel Lines' },
+  // Biology
   q9: { subject: 'Biology', chapter: 'Cell', topic: 'Organelles' },
   q10: { subject: 'Biology', chapter: 'Life Processes', topic: 'Nutrition' },
+  q33: { subject: 'Biology', chapter: 'Cell', topic: 'Basic Unit of Life' },
+  q34: { subject: 'Biology', chapter: 'Cell', topic: 'Nucleus' },
+  q35: { subject: 'Biology', chapter: 'Tissues', topic: 'Definition' },
+  q36: { subject: 'Biology', chapter: 'Life Processes', topic: 'Respiration' },
+  q37: { subject: 'Biology', chapter: 'Tissues', topic: 'Xylem' },
+  q38: { subject: 'Biology', chapter: 'Heredity & Evolution', topic: 'Law of Segregation' },
+  q39: { subject: 'Biology', chapter: 'Reproduction', topic: 'Asexual Reproduction' },
+  q40: { subject: 'Biology', chapter: 'Cell', topic: 'Prokaryotic vs Eukaryotic' },
 };
 
 type Phase = 'intro' | 'active' | 'result';
@@ -41,11 +75,12 @@ export function MockTestPage() {
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [questions] = useState<MockQuestion[]>(() => {
     const all = generateMockQuestions();
-    if (subjects.length === 0) return all;
-    return all.filter((q) => {
+    if (subjects.length === 0) return all.slice(0, 10);
+    const filtered = all.filter((q) => {
       const meta = QUESTION_META[q.id];
       return meta && subjects.includes(meta.subject);
     });
+    return filtered.slice(0, 10);
   });
 
   useEffect(() => {

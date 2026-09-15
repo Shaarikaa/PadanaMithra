@@ -523,7 +523,7 @@ export function DashboardPage() {
                     <p className="text-sm text-slate-500">Offline Mode, Personal Mentor, Live Video Class, Notes by Professionals.</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-amber-600">₹449</span>
+                    <span className="text-2xl font-bold text-amber-600">₹349</span>
                     <span className="text-sm text-slate-400">/month</span>
                   </div>
                 </div>
@@ -532,7 +532,7 @@ export function DashboardPage() {
                   className="mt-4 w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 >
                   <Crown className="mr-1.5 h-4 w-4" />
-                  Unlock All Premium Features — ₹449
+                  Unlock All Premium Features — ₹349
                 </Button>
                 <p className="mt-2 text-center text-xs text-slate-400">
                   Or unlock individual features for ₹99 each from the cards above.

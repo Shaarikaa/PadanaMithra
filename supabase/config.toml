@@ -1,0 +1,20 @@
+[functions.ai-solve]
+verify_jwt = true
+
+[functions.mentor-reply]
+verify_jwt = true
+
+[functions.monthly-report]
+verify_jwt = true
+
+[functions.ocr-vision]
+verify_jwt = true
+
+[functions.parent-connect]
+verify_jwt = true
+
+[functions.stripe-checkout]
+verify_jwt = false
+
+[functions.student-auth]
+verify_jwt = false

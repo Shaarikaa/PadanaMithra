@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, RotateCcw, Layers, Check, Target } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -20,14 +20,13 @@ export function FlashcardsPage() {
     return new Set(saved);
   });
 
-  // Filter flashcards by the student's selected subjects.
+  // Filter flashcards by the student's selected subjects only.
   const cards = useMemo(() => {
-    if (subjects.length === 0) return FLASHCARDS;
     return FLASHCARDS.filter((c) => subjects.includes(c.subject));
   }, [subjects]);
 
   // Reset index when card set changes (e.g. subject changed)
-  useMemo(() => {
+  useEffect(() => {
     setIndex(0);
     setFlipped(false);
   }, [subjects]);
