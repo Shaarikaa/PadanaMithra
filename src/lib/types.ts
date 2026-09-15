@@ -64,6 +64,7 @@ export interface MockQuestion {
 
 export interface Flashcard {
   id: string;
+  subject: string;
   front: string;
   back: string;
 }

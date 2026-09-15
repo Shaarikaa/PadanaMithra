@@ -246,18 +246,18 @@ export function generateMockQuestions(): import("./types").MockQuestion[] {
 }
 
 export const FLASHCARDS: import("./types").Flashcard[] = [
-  { id: "f1", front: "State Newton's First Law of Motion.", back: "An object remains at rest or in uniform motion unless acted upon by an external force. (Law of Inertia)" },
-  { id: "f2", front: "What is the formula for kinetic energy?", back: "KE = 1/2 m v squared, where m is mass and v is velocity." },
-  { id: "f3", front: "Define Ohm's Law.", back: "V = IR — voltage equals current multiplied by resistance, when temperature is constant." },
-  { id: "f4", front: "What is the pH of a neutral solution?", back: "pH = 7 at 25 degrees C, indicating equal H+ and OH- concentrations." },
-  { id: "f5", front: "State the Fundamental Theorem of Arithmetic.", back: "Every composite number can be expressed as a unique product of prime factors (order aside)." },
-  { id: "f6", front: "What is the Remainder Theorem?", back: "When p(x) is divided by (x - a), the remainder equals p(a)." },
-  { id: "f7", front: "What is the value of sin squared theta + cos squared theta?", back: "It equals 1 — the fundamental Pythagorean trigonometric identity." },
-  { id: "f8", front: "Name the powerhouse of the cell.", back: "Mitochondria — they produce ATP via cellular respiration." },
-  { id: "f9", front: "What is photosynthesis in one line?", back: "6CO2 + 6H2O, using light and chlorophyll, produces C6H12O6 + 6O2." },
-  { id: "f10", front: "What are Mendel's laws about?", back: "Inheritance of traits — the Law of Segregation and the Law of Independent Assortment." },
-  { id: "f11", front: "What does Snell's Law describe?", back: "The relationship between angles of incidence and refraction: n1 sin theta1 = n2 sin theta2." },
-  { id: "f12", front: "Define uniform motion.", back: "Motion in which an object covers equal distances in equal intervals of time." },
+  { id: "f1", subject: "Physics", front: "State Newton's First Law of Motion.", back: "An object remains at rest or in uniform motion unless acted upon by an external force. (Law of Inertia)" },
+  { id: "f2", subject: "Physics", front: "What is the formula for kinetic energy?", back: "KE = 1/2 m v squared, where m is mass and v is velocity." },
+  { id: "f3", subject: "Physics", front: "Define Ohm's Law.", back: "V = IR — voltage equals current multiplied by resistance, when temperature is constant." },
+  { id: "f4", subject: "Chemistry", front: "What is the pH of a neutral solution?", back: "pH = 7 at 25 degrees C, indicating equal H+ and OH- concentrations." },
+  { id: "f5", subject: "Mathematics", front: "State the Fundamental Theorem of Arithmetic.", back: "Every composite number can be expressed as a unique product of prime factors (order aside)." },
+  { id: "f6", subject: "Mathematics", front: "What is the Remainder Theorem?", back: "When p(x) is divided by (x - a), the remainder equals p(a)." },
+  { id: "f7", subject: "Mathematics", front: "What is the value of sin squared theta + cos squared theta?", back: "It equals 1 — the fundamental Pythagorean trigonometric identity." },
+  { id: "f8", subject: "Biology", front: "Name the powerhouse of the cell.", back: "Mitochondria — they produce ATP via cellular respiration." },
+  { id: "f9", subject: "Biology", front: "What is photosynthesis in one line?", back: "6CO2 + 6H2O, using light and chlorophyll, produces C6H12O6 + 6O2." },
+  { id: "f10", subject: "Biology", front: "What are Mendel's laws about?", back: "Inheritance of traits — the Law of Segregation and the Law of Independent Assortment." },
+  { id: "f11", subject: "Physics", front: "What does Snell's Law describe?", back: "The relationship between angles of incidence and refraction: n1 sin theta1 = n2 sin theta2." },
+  { id: "f12", subject: "Physics", front: "Define uniform motion.", back: "Motion in which an object covers equal distances in equal intervals of time." },
 ];
 
 export function predictQuestions(subject: string, chapter: string): import("./types").PredictedQuestion[] {

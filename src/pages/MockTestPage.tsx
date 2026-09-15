@@ -41,11 +41,11 @@ export function MockTestPage() {
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [questions] = useState<MockQuestion[]>(() => {
     const all = generateMockQuestions();
-    const filtered = all.filter((q) => {
+    if (subjects.length === 0) return all;
+    return all.filter((q) => {
       const meta = QUESTION_META[q.id];
       return meta && subjects.includes(meta.subject);
     });
-    return filtered.length > 0 ? filtered : all;
   });
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export function MockTestPage() {
   const handleFinish = () => {
     // Record every answer to the learning engine
     for (const q of questions) {
-      const meta = QUESTION_META[q.id] ?? { subject: 'Physics', chapter: 'Motion', topic: '' };
+      const meta = QUESTION_META[q.id] ?? { subject: subjects[0] ?? '', chapter: '', topic: '' };
       const selected = answers[q.id];
       const isCorrect = selected === q.answerIndex;
       if (selected !== undefined) {

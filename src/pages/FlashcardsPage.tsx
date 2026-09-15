@@ -8,9 +8,11 @@ import { cn } from '@/lib/utils';
 import { useApp } from '@/lib/AppContext';
 import { FLASHCARDS } from '@/lib/mockData';
 import { loadJSON, saveJSON, STORAGE_KEYS } from '@/lib/storage';
+import { useSelectedSubjects } from '@/hooks/useSelectedSubjects';
 
 export function FlashcardsPage() {
   const { profile } = useApp();
+  const { subjects } = useSelectedSubjects();
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [known, setKnown] = useState<Set<string>>(() => {
@@ -18,14 +20,17 @@ export function FlashcardsPage() {
     return new Set(saved);
   });
 
-  // Filter flashcards by the student's selected subjects when available.
+  // Filter flashcards by the student's selected subjects.
   const cards = useMemo(() => {
-    if (!profile?.selectedSubjects || profile.selectedSubjects.length === 0) return FLASHCARDS;
-    const filtered = FLASHCARDS.filter((c) =>
-      profile.selectedSubjects.some((s) => c.front.toLowerCase().includes(s.toLowerCase()) || c.back.toLowerCase().includes(s.toLowerCase())),
-    );
-    return filtered.length > 0 ? filtered : FLASHCARDS;
-  }, [profile]);
+    if (subjects.length === 0) return FLASHCARDS;
+    return FLASHCARDS.filter((c) => subjects.includes(c.subject));
+  }, [subjects]);
+
+  // Reset index when card set changes (e.g. subject changed)
+  useMemo(() => {
+    setIndex(0);
+    setFlipped(false);
+  }, [subjects]);
 
   const card = cards[index];
   const total = cards.length;

@@ -12,8 +12,7 @@ export function useSelectedSubjects() {
 
   const subjects = useMemo<string[]>(() => {
     const selected = profile?.selectedSubjects ?? [];
-    const filtered = SUPPORTED_SUBJECTS.filter((s) => selected.includes(s));
-    return filtered.length > 0 ? filtered : SUPPORTED_SUBJECTS;
+    return SUPPORTED_SUBJECTS.filter((s) => selected.includes(s));
   }, [profile?.selectedSubjects]);
 
   const subjectInfos = useMemo<SubjectInfo[]>(() => {
@@ -32,7 +31,7 @@ export function useSelectedSubjects() {
     if (profile?.currentSubject && subjects.includes(profile.currentSubject)) {
       return profile.currentSubject;
     }
-    return subjects[0] ?? 'Physics';
+    return subjects[0] ?? '';
   }, [profile?.currentSubject, subjects]);
 
   return {
