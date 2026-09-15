@@ -15,6 +15,7 @@ import {
   MessageSquareHeart,
   Video,
   NotebookPen,
+  Accessibility,
   type LucideIcon,
 } from 'lucide-react';
 import type { FeatureId } from './types';
@@ -125,6 +126,14 @@ export const FEATURES: FeatureConfig[] = [
     icon: Brain,
     premium: false,
     accent: 'bg-indigo-100 text-indigo-600',
+  },
+  {
+    id: 'accessible-learning',
+    title: 'Accessible Learning',
+    description: 'Voice-guided learning with audio flash cards and read-aloud tools.',
+    icon: Accessibility,
+    premium: false,
+    accent: 'bg-teal-100 text-teal-600',
   },
   {
     id: 'career',

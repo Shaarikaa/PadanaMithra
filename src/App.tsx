@@ -23,6 +23,7 @@ import { TeachBackPage } from '@/pages/TeachBackPage';
 import { FocusTimerPage } from '@/pages/FocusTimerPage';
 import { TextbookHubPage } from '@/pages/TextbookHubPage';
 import { MemorySupportPage } from '@/pages/MemorySupportPage';
+import { AccessibleLearningPage } from '@/pages/AccessibleLearningPage';
 import { ParentLoginPage } from '@/pages/ParentLoginPage';
 import { ParentDashboardPage } from '@/pages/ParentDashboardPage';
 import { FEATURES } from '@/lib/features';
@@ -46,6 +47,7 @@ const FEATURE_PAGES: Record<string, () => React.ReactElement | null> = {
   'focus-timer': FocusTimerPage,
   'textbook-hub': TextbookHubPage,
   'memory-support': MemorySupportPage,
+  'accessible-learning': AccessibleLearningPage,
 };
 
 // Pages that require authentication
