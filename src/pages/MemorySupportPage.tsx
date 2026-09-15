@@ -17,7 +17,7 @@ import {
   MEMORY_SUBJECTS, type MemorySubject, type ActivityType, type DailyActivity,
   type MemoryCard, type RecallQuestion, type VisualLearningItem,
   type MemoryTopic, type MemoryProgressSummary,
-  getClassLevelLabel, getChaptersForMemorySubject, getAllTopicsForSubject,
+  getClassLevelLabel, classLevelToClassId, getChaptersForMemorySubject, getAllTopicsForSubject,
   generateDailyActivity, generateMemoryCards, generateRecallQuestion,
   generateVisualLearningItems, fetchMemoryTopics, upsertMemoryTopic,
   updateMemoryTopic, recordProgress, recordSession, scheduleReview,
@@ -25,7 +25,7 @@ import {
   computeAdaptiveStatus, getAdaptiveRecommendation,
 } from '@/lib/memoryService';
 
-type ViewMode = 'home' | 'subject' | 'activity' | 'progress';
+type ViewMode = 'home' | 'activity' | 'progress';
 
 const SUBJECT_ICONS: Record<MemorySubject, LucideIcon> = {
   Physics: Zap,
@@ -212,25 +212,27 @@ function AudioControls({
 export function MemorySupportPage() {
   const { profile, language, setLanguage } = useApp();
   const [view, setView] = useState<ViewMode>('home');
-  const [selectedSubject, setSelectedSubject] = useState<MemorySubject | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
+  const [activeSubject, setActiveSubject] = useState<MemorySubject | null>(null);
 
-  const classId = profile?.classLevel ?? '';
-  const classLabel = getClassLevelLabel(classId);
+  const classId = classLevelToClassId(profile?.classLevel ?? '');
+  const classLabel = profile?.classLevel ?? '';
   const userId = getUserId();
 
-  // Filter subjects to only those the student has selected, intersected with the 4 allowed
+  // Auto-select subjects from the student's profile — no manual selector
   const availableSubjects = useMemo(() => {
     const selected = profile?.selectedSubjects ?? [];
     return MEMORY_SUBJECTS.filter((s) => selected.includes(s));
   }, [profile?.selectedSubjects]);
 
-  const hasClass = Boolean(profile?.classLevel && profile?.classLevel !== '');
+  const hasClass = Boolean(classId && profile?.classLevel && profile?.classLevel !== '');
 
-  const handleSelectSubject = (subject: MemorySubject) => {
-    setSelectedSubject(subject);
-    setView('subject');
-  };
+  // Auto-set active subject when available subjects change
+  useEffect(() => {
+    if (availableSubjects.length > 0 && !availableSubjects.includes(activeSubject ?? ('' as MemorySubject))) {
+      setActiveSubject(availableSubjects[0]);
+    }
+  }, [availableSubjects, activeSubject]);
 
   const handleSelectActivity = (type: ActivityType) => {
     if (type === 'progress') {
@@ -243,11 +245,8 @@ export function MemorySupportPage() {
 
   const handleBack = () => {
     if (view === 'activity' || view === 'progress') {
-      setView('subject');
-      setSelectedActivity(null);
-    } else if (view === 'subject') {
       setView('home');
-      setSelectedSubject(null);
+      setSelectedActivity(null);
     }
   };
 
@@ -271,7 +270,7 @@ export function MemorySupportPage() {
     );
   }
 
-  // ---- Home view: subject selection ----
+  // ---- Home view: activity selection (no subject selector) ----
   if (view === 'home') {
     return (
       <AppShell>
@@ -308,31 +307,17 @@ export function MemorySupportPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Show which subjects are being used (read-only, not a selector) */}
+          <div className="mb-6 flex flex-wrap gap-2.5">
             {availableSubjects.map((subject) => {
               const Icon = SUBJECT_ICONS[subject];
-              const emoji = SUBJECT_EMOJIS[subject];
-              const accent = SUBJECT_ACCENTS[subject];
-              const chapters = getChaptersForMemorySubject(classId, subject);
               return (
-                <button
-                  key={subject}
-                  onClick={() => handleSelectSubject(subject)}
-                  className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
-                >
-                  <span className={cn('flex h-12 w-12 items-center justify-center rounded-xl', accent)}>
-                    <Icon className="h-6 w-6" />
+                <div key={subject} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                  <span className={cn('flex h-7 w-7 items-center justify-center rounded-lg', SUBJECT_ACCENTS[subject])}>
+                    <Icon className="h-3.5 w-3.5" />
                   </span>
-                  <div className="flex-1">
-                    <p className="text-base font-semibold text-slate-900">
-                      {emoji} {classLabel} {subject}
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {chapters.length} chapters
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-indigo-500" />
-                </button>
+                  <span className="text-sm font-medium text-slate-700">{SUBJECT_EMOJIS[subject]} {subject}</span>
+                </div>
               );
             })}
             {availableSubjects.length === 0 && (
@@ -344,58 +329,26 @@ export function MemorySupportPage() {
             )}
           </div>
 
-          <p className="mt-8 text-center text-xs text-slate-400">
-            Memory Support is an educational learning tool. It does not diagnose, monitor, or treat dementia or any medical condition.
-          </p>
-        </div>
-      </AppShell>
-    );
-  }
-
-  // ---- Subject view: activity selection ----
-  if (view === 'subject' && selectedSubject) {
-    const Icon = SUBJECT_ICONS[selectedSubject];
-    return (
-      <AppShell>
-        <div className="mx-auto max-w-4xl">
-          <button
-            onClick={handleBack}
-            className="mb-4 flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-indigo-600"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to subjects
-          </button>
-
-          <div className="mb-8 flex items-center gap-3">
-            <span className={cn('flex h-12 w-12 items-center justify-center rounded-2xl', SUBJECT_ACCENTS[selectedSubject])}>
-              <Icon className="h-6 w-6" />
-            </span>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                {SUBJECT_EMOJIS[selectedSubject]} {classLabel} {selectedSubject}
-              </h1>
-              <p className="mt-0.5 text-sm text-slate-500">Choose a memory activity</p>
+          {availableSubjects.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ACTIVITY_TYPES.map((activity) => {
+                const ActivityIcon = activity.icon;
+                return (
+                  <button
+                    key={activity.type}
+                    onClick={() => handleSelectActivity(activity.type)}
+                    className="group flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 transition group-hover:scale-110">
+                      <ActivityIcon className="h-5 w-5" />
+                    </span>
+                    <p className="text-sm font-semibold text-slate-900">{activity.label}</p>
+                    <p className="text-xs text-slate-500">{activity.description}</p>
+                  </button>
+                );
+              })}
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {ACTIVITY_TYPES.map((activity) => {
-              const ActivityIcon = activity.icon;
-              return (
-                <button
-                  key={activity.type}
-                  onClick={() => handleSelectActivity(activity.type)}
-                  className="group flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
-                >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 transition group-hover:scale-110">
-                    <ActivityIcon className="h-5 w-5" />
-                  </span>
-                  <p className="text-sm font-semibold text-slate-900">{activity.label}</p>
-                  <p className="text-xs text-slate-500">{activity.description}</p>
-                </button>
-              );
-            })}
-          </div>
+          )}
 
           <p className="mt-8 text-center text-xs text-slate-400">
             Memory Support is an educational learning tool. It does not diagnose, monitor, or treat dementia or any medical condition.
@@ -406,11 +359,10 @@ export function MemorySupportPage() {
   }
 
   // ---- Progress view ----
-  if (view === 'progress' && selectedSubject) {
+  if (view === 'progress') {
     return (
       <ProgressView
         userId={userId ?? ''}
-        subject={selectedSubject}
         classLabel={classLabel}
         onBack={handleBack}
         language={language}
@@ -420,16 +372,18 @@ export function MemorySupportPage() {
   }
 
   // ---- Activity view ----
-  if (view === 'activity' && selectedSubject && selectedActivity) {
+  if (view === 'activity' && selectedActivity && availableSubjects.length > 0) {
     return (
       <ActivityView
         userId={userId ?? ''}
-        subject={selectedSubject}
+        subject={activeSubject ?? availableSubjects[0]}
         classId={classId}
         classLabel={classLabel}
         activityType={selectedActivity}
         onBack={handleBack}
         language={language}
+        availableSubjects={availableSubjects}
+        onSubjectChange={setActiveSubject}
       />
     );
   }
@@ -442,6 +396,7 @@ export function MemorySupportPage() {
 // =====================================================
 function ActivityView({
   userId, subject, classId, classLabel, activityType, onBack, language,
+  availableSubjects, onSubjectChange,
 }: {
   userId: string;
   subject: MemorySubject;
@@ -450,6 +405,8 @@ function ActivityView({
   activityType: ActivityType;
   onBack: () => void;
   language: Language;
+  availableSubjects: MemorySubject[];
+  onSubjectChange: (s: MemorySubject) => void;
 }) {
   const Icon = SUBJECT_ICONS[subject];
 
@@ -461,7 +418,7 @@ function ActivityView({
           className="mb-4 flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-indigo-600"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to {subject}
+          Back to Memory Support
         </button>
 
         <div className="mb-6 flex items-center gap-3">
@@ -477,6 +434,24 @@ function ActivityView({
             </p>
           </div>
         </div>
+
+        {/* Subject switcher — only if student has multiple selected subjects */}
+        {availableSubjects.length > 1 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {availableSubjects.map((s) => (
+              <button
+                key={s}
+                onClick={() => onSubjectChange(s)}
+                className={cn(
+                  'rounded-lg px-3 py-1.5 text-xs font-medium transition',
+                  subject === s ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600',
+                )}
+              >
+                {SUBJECT_EMOJIS[s]} {s}
+              </button>
+            ))}
+          </div>
+        )}
 
         {activityType === 'daily_activity' && (
           <DailyActivityView userId={userId} subject={subject} classId={classId} classLabel={classLabel} language={language} />
@@ -895,15 +870,16 @@ function MemoryCardsView({
   const audio = useAudioController(language);
 
   const generateCards = useCallback(() => {
-    const allTopics = getAllTopicsForSubject(classId, subject);
-    if (allTopics.length === 0) {
+    const chapters = getChaptersForMemorySubject(classId, subject);
+    if (chapters.length === 0) {
       setLoading(false);
       return;
     }
-    const chosen = allTopics[Math.floor(Math.random() * allTopics.length)];
-    const generated = generateMemoryCards(classLabel, subject, chosen.chapter, chosen.topic, language, 5);
+    // Pick a random chapter to generate cards from
+    const chapter = chapters[Math.floor(Math.random() * chapters.length)];
+    const generated = generateMemoryCards(classLabel, subject, chapter.name, chapter.topics[0] ?? 'Key concept', language, 5);
     setCards(generated);
-    upsertMemoryTopic(userId, subject, classLabel, chosen.chapter, chosen.topic).then(setTopicRecord);
+    upsertMemoryTopic(userId, subject, classLabel, chapter.name, generated[0]?.topic ?? chapter.topics[0] ?? 'Key concept').then(setTopicRecord);
     setCurrentIndex(0);
     setShowBack(false);
     setShowHint(false);
@@ -1569,10 +1545,9 @@ function RecallPracticeView({
 // PROGRESS VIEW
 // =====================================================
 function ProgressView({
-  userId, subject, classLabel, onBack, language, availableSubjects,
+  userId, classLabel, onBack, language, availableSubjects,
 }: {
   userId: string;
-  subject: MemorySubject;
   classLabel: string;
   onBack: () => void;
   language: Language;
@@ -1620,12 +1595,12 @@ function ProgressView({
       <div className="mx-auto max-w-3xl">
         <button onClick={onBack} className="mb-4 flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600">
           <ArrowLeft className="h-4 w-4" />
-          Back to {subject}
+          Back to Memory Support
         </button>
 
         <div className="mb-6">
           <h1 className="text-xl font-bold tracking-tight text-slate-900">Memory Progress</h1>
-          <p className="text-sm text-slate-500">{classLabel} • {subject}</p>
+          <p className="text-sm text-slate-500">{classLabel}</p>
         </div>
 
         {summary && (
